@@ -7,6 +7,33 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Youtube, ExternalLink, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
+
+// Helper to extract meaningful topic from filename
+function extractTopicFromFilename(filename: string): string {
+  const cleanName = filename
+    .replace(/^\d+_/, '') // Remove timestamp prefix
+    .replace(/\.pdf$/i, '') // Remove .pdf extension
+    .replace(/[_-]/g, ' ') // Replace underscores/dashes with spaces
+    .toLowerCase();
+
+  // Common patterns
+  if (cleanName.includes('ncert') || cleanName.includes('keph')) {
+    return 'NCERT Physics Class 11';
+  }
+  if (cleanName.includes('chemistry')) {
+    return 'Chemistry';
+  }
+  if (cleanName.includes('math')) {
+    return 'Mathematics';
+  }
+  if (cleanName.includes('biology')) {
+    return 'Biology';
+  }
+
+  return cleanName;
+}
+
+
 interface Video {
   id: string;
   title: string;
@@ -33,34 +60,44 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
   useEffect(() => {
     // Auto-load recommendations when component mounts
     loadRecommendations();
-  }, []);
+    }, []);
 
-  const loadRecommendations = async (topic?: string) => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/youtube-search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topic: topic || undefined,
-          pdfContent: !topic ? pdfContent : undefined,
-        }),
-      });
+    const loadRecommendations = async (topic?: string) => {
+        setLoading(true);
+        try {
+            // Try to extract topic from PDF filename if no custom topic
+            let searchTopic = topic;
 
-      const data = await response.json();
+            if (!searchTopic && pdfId) {
+            searchTopic = extractTopicFromFilename(pdfId);
+            console.log('Extracted topic from filename:', searchTopic);
+            }
 
-      if (data.success && data.videos) {
-        setVideos(data.videos);
-        setSearchQuery(data.searchQuery);
-      } else {
-        console.error('Failed to load videos:', data.error);
-      }
-    } catch (error) {
-      console.error('Error loading YouTube recommendations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+            const response = await fetch('/api/youtube-search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                topic: searchTopic || undefined,
+                pdfContent: !searchTopic ? pdfContent.substring(0, 1000) : undefined,
+            }),
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.videos) {
+            setVideos(data.videos);
+            setSearchQuery(data.searchQuery);
+            } else {
+            console.error('Failed to load videos:', data.error);
+            }
+        } catch (error) {
+            console.error('Error loading YouTube recommendations:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
 
   const handleCustomSearch = () => {
     if (customTopic.trim().length > 0) {
