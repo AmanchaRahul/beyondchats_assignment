@@ -190,16 +190,10 @@ export default function Home() {
               </div>
             </TabsContent>
 
-            <TabsContent value="chat">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="h-[600px]">
-                  <PDFViewer url={selectedPdf.url} />
-                </div>
-                <div className="h-[600px]">
-                  <ChatInterface pdfId={selectedPdf.id} />
-                </div>
-              </div>
+            <TabsContent value="chat" className="h-[calc(100vh-12rem)]">
+              <ChatInterface pdfId={selectedPdf.id} />
             </TabsContent>
+
 
             <TabsContent value="videos">
               <YoutubeRecommendations 
