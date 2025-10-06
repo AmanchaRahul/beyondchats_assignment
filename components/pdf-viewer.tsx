@@ -1,67 +1,28 @@
 'use client';
 
-import { useState } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
+import dynamic from 'next/dynamic';
+import { Loader2 } from 'lucide-react';
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// Dynamically import PDFViewerClient with SSR disabled
+const PDFViewerClient = dynamic(
+  () => import('./pdf-viewer-client').then((mod) => mod.PDFViewerClient),
+  {
+    ssr: false, // Disable server-side rendering
+    loading: () => (
+      <div className="flex items-center justify-center h-full border rounded-lg bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+          <p className="text-sm text-gray-600">Loading PDF viewer...</p>
+        </div>
+      </div>
+    ),
+  }
+);
 
 interface PDFViewerProps {
   url: string;
 }
 
 export function PDFViewer({ url }: PDFViewerProps) {
-  const [numPages, setNumPages] = useState<number>(0);
-  const [pageNumber, setPageNumber] = useState<number>(1);
-
-  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
-    setNumPages(numPages);
-  }
-
-  return (
-    <div className="flex flex-col h-full border rounded-lg overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b bg-gray-50">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setPageNumber(prev => Math.max(1, prev - 1))}
-          disabled={pageNumber <= 1}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        
-        <span className="text-sm">
-          Page {pageNumber} of {numPages}
-        </span>
-        
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setPageNumber(prev => Math.min(numPages, prev + 1))}
-          disabled={pageNumber >= numPages}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <div className="flex-1 overflow-auto p-4 bg-gray-100">
-        <Document
-          file={url}
-          onLoadSuccess={onDocumentLoadSuccess}
-          className="flex justify-center"
-        >
-          <Page 
-            pageNumber={pageNumber} 
-            renderTextLayer={true}
-            renderAnnotationLayer={true}
-            className="shadow-lg"
-          />
-        </Document>
-      </div>
-    </div>
-  );
+  return <PDFViewerClient url={url} />;
 }
