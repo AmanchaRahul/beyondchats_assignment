@@ -9,6 +9,8 @@ import { ChatInterface } from '@/components/chat-interface';
 import { ProgressDashboard } from '@/components/progress-dashboard';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { YoutubeRecommendations } from '@/components/youtube-recommendations';
+
 
 export default function Home() {
   const [selectedPdf, setSelectedPdf] = useState<{
@@ -160,10 +162,11 @@ export default function Home() {
 
         {!processing && selectedPdf && pdfContent && (
           <Tabs defaultValue="quiz" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="quiz">Quiz</TabsTrigger>
               <TabsTrigger value="pdf">PDF Viewer</TabsTrigger>
               <TabsTrigger value="chat">Chat</TabsTrigger>
+              <TabsTrigger value="videos">Videos</TabsTrigger>
               <TabsTrigger value="progress">Progress</TabsTrigger>
             </TabsList>
 
@@ -198,11 +201,19 @@ export default function Home() {
               </div>
             </TabsContent>
 
+            <TabsContent value="videos">
+              <YoutubeRecommendations 
+                pdfContent={pdfContent}
+                pdfId={selectedPdf.id}
+              />
+            </TabsContent>
+
             <TabsContent value="progress">
               <ProgressDashboard pdfId={selectedPdf.id} />
             </TabsContent>
           </Tabs>
         )}
+
 
         {!processing && !selectedPdf && (
           <div className="text-center py-20">
