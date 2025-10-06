@@ -1,15 +1,15 @@
-import { ChromaClient } from 'chromadb';
+import { CloudClient } from 'chromadb';
 
-export const getChromaClient = () => {
-  return new ChromaClient({
-    path: process.env.CHROMA_SERVER_HOST,
-    auth: {
-      provider: 'token',
-      credentials: process.env.CHROMA_API_KEY!,
-      providerOptions: {
-        tenant: process.env.CHROMA_TENANT,
-        database: process.env.CHROMA_DATABASE,
-      },
-    },
+// Initialize ChromaDB Cloud Client
+export const chromaClient = new CloudClient({
+  apiKey: process.env.CHROMA_API_KEY!,
+  tenant: process.env.CHROMA_TENANT!,
+  database: process.env.CHROMA_DATABASE!,
+});
+
+// Helper function to get or create collection
+export const getOrCreateCollection = async (collectionName: string = 'pdf_embeddings') => {
+  return await chromaClient.getOrCreateCollection({
+    name: collectionName,
   });
 };

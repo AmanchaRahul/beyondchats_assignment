@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getChromaClient } from '@/lib/chromadb';
+import { getOrCreateCollection } from '@/lib/chromadb';
 import { openai } from '@/lib/openai';
 
 export async function POST(req: NextRequest) {
   try {
     const { pdfId, chunks } = await req.json();
 
-    const client = getChromaClient();
-    const collection = await client.getOrCreateCollection({
-      name: 'pdf_embeddings',
-    });
+    // Get or create collection
+    const collection = await getOrCreateCollection('pdf_embeddings');
 
-    // Generate embeddings with OpenAI
+    // Generate embeddings with OpenAI (we stick with this as you mentioned)
     const embeddings = await Promise.all(
       chunks.map(async (chunk: string) => {
         const response = await openai.embeddings.create({
@@ -22,7 +20,7 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    // Store in ChromaDB
+    // Store in ChromaDB Cloud
     await collection.add({
       ids: chunks.map((_: any, i: number) => `${pdfId}_chunk_${i}`),
       embeddings: embeddings,
@@ -33,7 +31,7 @@ export async function POST(req: NextRequest) {
       })),
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: 'Embeddings created successfully' });
   } catch (error) {
     console.error('Embedding error:', error);
     return NextResponse.json(
