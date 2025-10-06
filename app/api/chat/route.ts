@@ -14,22 +14,16 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('Processing chat message:', message);
-    console.log('PDF ID:', pdfId);
 
-    // Generate embedding for user query with OpenAI
+    // Generate embedding for user query
     const queryEmbedding = await openai.embeddings.create({
       model: 'text-embedding-3-small',
       input: message,
     });
 
-    console.log('Query embedding generated');
-
-    // Get collection and search ChromaDB Cloud for relevant chunks
+    // Get collection and search
     const collection = await getOrCreateCollection('pdf_embeddings');
     
-    console.log('Searching ChromaDB...');
-    
-    // Build where filter only if pdfId is provided and valid
     const whereFilter = pdfId && pdfId !== 'undefined' ? { pdfId } : undefined;
     
     const results = await collection.query({
@@ -38,37 +32,55 @@ export async function POST(req: NextRequest) {
       ...(whereFilter && { where: whereFilter }),
     });
 
-    console.log('ChromaDB search results:', results.documents[0]?.length || 0, 'chunks found');
+    console.log('ChromaDB results:', results.documents[0]?.length || 0, 'chunks');
 
     // Check if we have results
     if (!results.documents || !results.documents[0] || results.documents[0].length === 0) {
       return NextResponse.json({
         success: true,
-        response: "I couldn't find relevant information in the uploaded PDFs. The content might not have been processed yet, or your question might be outside the scope of the document. Please try rephrasing your question or make sure the PDF has been fully processed.",
+        response: "I couldn't find relevant information in the PDF. Please try rephrasing your question.",
         citations: [],
       });
     }
 
-    const context = results.documents[0]
-      .filter((doc: string) => doc && doc.trim().length > 0)
-      .join('\n\n');
+    // Build context with citations
+    const contextParts: string[] = [];
+    const citations: Array<{page: number, quote: string}> = [];
     
-    const metadatas = results.metadatas[0] || [];
+    results.documents[0].forEach((doc: string, idx: number) => {
+      const metadata = results.metadatas[0][idx] as any;
+      const pageNum = metadata?.pageNumber || idx + 1;
+      
+      // Get 2-3 lines (first 150 chars as a quote)
+      const quote = doc.substring(0, 150).trim() + (doc.length > 150 ? '...' : '');
+      
+      contextParts.push(`[Page ${pageNum}]: ${doc}`);
+      citations.push({
+        page: pageNum,
+        quote: quote
+      });
+    });
 
-    console.log('Generating response with GPT-4...');
+    const context = contextParts.join('\n\n');
 
-    // Generate response with GPT-4
+    console.log('Generating response with citations...');
+
+    // Generate response with citation instructions
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-          content: `You are a helpful tutor assistant. Answer questions based on the following context from the textbook. 
-          Provide clear, accurate, and educational answers. 
-          If the context doesn't contain enough information, say so politely.
-          
-          Context from textbook:
-          ${context}`,
+          content: `You are a helpful tutor assistant. Answer questions based ONLY on the provided context from the textbook.
+
+IMPORTANT CITATION RULES:
+- When referencing information, cite it as: "According to page X: 'quote from text'"
+- Use the exact page numbers provided in the context
+- Quote 1-2 sentences from the source material
+- Be accurate and educational
+
+Context from textbook:
+${context}`,
         },
         {
           role: 'user',
@@ -79,42 +91,22 @@ export async function POST(req: NextRequest) {
       max_tokens: 800,
     });
 
-    const response = completion.choices[0].message.content || "I couldn't generate a response. Please try again.";
+    const response = completion.choices[0].message.content || "No response generated.";
 
-    console.log('Response generated successfully');
-
-    // Extract citations from metadata
-    const citations = metadatas
-      .map((meta: any, idx: number) => {
-        const doc = results.documents[0][idx];
-        if (!doc || doc.trim().length === 0) return null;
-        
-        return {
-          page: meta?.pageNumber || meta?.chunkIndex || 'Unknown',
-          text: doc.substring(0, 150) + (doc.length > 150 ? '...' : ''),
-        };
-      })
-      .filter((citation: any) => citation !== null);
+    console.log('Response generated with citations');
 
     return NextResponse.json({
       success: true,
       response,
-      citations,
+      citations: citations.slice(0, 3), // Top 3 most relevant
     });
 
   } catch (error: any) {
     console.error('Chat error:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-    });
-
     return NextResponse.json(
       { 
         success: false, 
         error: error.message || 'Failed to process chat',
-        details: error.toString()
       },
       { status: 500 }
     );

@@ -58,26 +58,57 @@ export default function Home() {
       
       console.log('PDF parsed successfully, items:', data.length);
       
-      // Extract text content
+      // Group elements by page and create chunks
+      const pageMap = new Map<number, string>();
+      
+      data.forEach((element: any) => {
+        const pageNum = element.pageNumber || 1;
+        const existingText = pageMap.get(pageNum) || '';
+        pageMap.set(pageNum, existingText + '\n' + (element.text || ''));
+      });
+      
+      // Create chunks with page numbers (500 chars per chunk)
+      const chunksWithPages: Array<{text: string, pageNumber: number, chunkIndex: number}> = [];
+      let globalChunkIndex = 0;
+      
+      pageMap.forEach((pageText, pageNum) => {
+        const cleanText = pageText.trim();
+        if (cleanText.length > 0) {
+          // Split page into ~500 character chunks
+          const chunkSize = 500;
+          for (let i = 0; i < cleanText.length; i += chunkSize) {
+            const chunkText = cleanText.substring(i, i + chunkSize);
+            if (chunkText.trim().length > 50) { // Only store meaningful chunks
+              chunksWithPages.push({
+                text: chunkText,
+                pageNumber: pageNum,
+                chunkIndex: globalChunkIndex++
+              });
+            }
+          }
+        }
+      });
+      
+      // Extract full content for quiz generation
       const content = data
         .map((item: any) => item.text || '')
         .filter((text: string) => text.trim().length > 0)
         .join('\n');
       
       console.log('Extracted content length:', content.length);
+      console.log('Created chunks with pages:', chunksWithPages.length);
       setPdfContent(content);
       
       // Create embeddings in ChromaDB
-      if (content.length > 100) {
-        const chunks = content.match(/.{1,1000}/g) || [];
-        console.log('Creating embeddings for', chunks.length, 'chunks');
+      if (chunksWithPages.length > 0) {
+        console.log('Creating embeddings for', chunksWithPages.length, 'chunks');
         
         const embedResponse = await fetch('/api/embed', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             pdfId,
-            chunks,
+            chunks: chunksWithPages,
           }),
         });
         

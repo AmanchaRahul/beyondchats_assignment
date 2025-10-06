@@ -74,13 +74,20 @@ export function ChatInterface({ pdfId }: ChatInterfaceProps) {
               >
                 <p className="whitespace-pre-wrap">{msg.content}</p>
                 {msg.citations && msg.citations.length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-gray-300 space-y-1">
-                    <p className="text-xs font-semibold">Sources:</p>
-                    {msg.citations.map((citation, cidx) => (
-                      <Badge key={cidx} variant="secondary" className="text-xs">
-                        Page {citation.page}
-                      </Badge>
-                    ))}
+                  <div className="mt-3 pt-3 border-t border-gray-300">
+                    <p className="text-xs font-semibold mb-2">Sources:</p>
+                    <div className="space-y-2">
+                      {msg.citations.map((citation, cidx) => (
+                        <div key={cidx} className="text-xs bg-gray-50 p-2 rounded">
+                          <Badge variant="secondary" className="text-xs mb-1">
+                            Page {citation.page}
+                          </Badge>
+                          <p className="text-gray-700 italic mt-1">
+                            "{citation.quote}"
+                          </p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
