@@ -1,34 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrCreateCollection } from '@/lib/chromadb';
+import { getChromaClient } from '@/lib/chromadb';
 import { openai } from '@/lib/openai';
 
 export async function POST(req: NextRequest) {
   try {
     const { message, pdfId } = await req.json();
 
-    // Generate embedding for user query with OpenAI
+    // Generate embedding for user query
     const queryEmbedding = await openai.embeddings.create({
       model: 'text-embedding-3-small',
       input: message,
     });
 
-    // Get collection and search ChromaDB Cloud for relevant chunks
-    const collection = await getOrCreateCollection('pdf_embeddings');
+    // Search ChromaDB for relevant chunks
+    const client = getChromaClient();
+    const collection = await client.getCollection({ name: 'pdf_embeddings' });
     
     const results = await collection.query({
       queryEmbeddings: [queryEmbedding.data[0].embedding],
       nResults: 5,
       where: pdfId ? { pdfId } : undefined,
     });
-
-    // Check if we have results
-    if (!results.documents[0] || results.documents[0].length === 0) {
-      return NextResponse.json({
-        success: true,
-        response: "I couldn't find relevant information in the uploaded PDFs. Please make sure the PDF has been processed.",
-        citations: [],
-      });
-    }
 
     const context = results.documents[0].join('\n\n');
     const metadatas = results.metadatas[0];
@@ -40,7 +32,7 @@ export async function POST(req: NextRequest) {
         {
           role: 'system',
           content: `You are a helpful tutor. Answer the question based on the following context from the textbook. 
-          Always cite information clearly and explain concepts thoroughly.
+          Always cite the page number when referencing information.
           
           Context: ${context}`,
         },
@@ -56,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     // Extract citations from metadata
     const citations = metadatas.map((meta: any, idx: number) => ({
-      page: meta.pageNumber || meta.chunkIndex || 'Unknown',
+      page: meta.pageNumber || 'Unknown',
       text: results.documents[0][idx].substring(0, 150) + '...',
     }));
 
