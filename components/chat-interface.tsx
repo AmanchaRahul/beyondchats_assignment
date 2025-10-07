@@ -18,8 +18,6 @@ import {
   Youtube, 
   BarChart3, 
   Loader2, 
-  User, 
-  Bot, 
   Plus 
 } from 'lucide-react';
 import { SourceSelector } from '@/components/source-selector';
@@ -32,12 +30,21 @@ interface ChatMessage {
   citations?: Array<{page: number, quote: string}>;
 }
 
+interface Chat {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+}
+
 interface ChatInterfaceProps {
+  chatId: string;
+  chat?: Chat;
   pdfId: string;
   onGenerateQuiz?: () => void;
   onShowProgress?: () => void;
   onShowVideos?: () => void;
   onPdfSelect?: (id: string, url: string) => void;
+  onChatUpdate?: (chatId: string, title: string, messages: ChatMessage[]) => void;
 }
 
 let idCounter = 0;
@@ -46,58 +53,89 @@ function generateUniqueId(): string {
 }
 
 export function ChatInterface({
+  chatId,
+  chat,
   pdfId,
   onGenerateQuiz,
   onShowProgress,
   onShowVideos,
-  onPdfSelect,  // ADD THIS
+  onPdfSelect,
+  onChatUpdate,
 }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(chat?.messages || []);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
+    if (chat) {
+      setMessages(chat.messages);
+    }
+  }, [chat]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+  if (!input.trim()) return;
+  
+  // If no chatId, create one automatically
+  let activeChatId = chatId;
+  if (!activeChatId) {
+    activeChatId = Date.now().toString();
+    console.warn('No chatId provided, created:', activeChatId);
+  }
 
-    const userMessage: ChatMessage = {
+  const userMessage: ChatMessage = {
+    id: generateUniqueId(),
+    role: 'user',
+    content: input,
+  };
+
+  const newMessages = [...messages, userMessage];
+  setMessages(newMessages);
+  
+  // Update chat title if first message
+  const title = messages.length === 0 ? input.substring(0, 30) + '...' : (chat?.title || 'New conversation');
+  if (onChatUpdate) {
+    onChatUpdate(activeChatId, title, newMessages);
+  }
+
+  setInput('');
+  setLoading(true);
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: input, pdfId }),
+    });
+
+    const data = await response.json();
+
+    const assistantMessage: ChatMessage = {
       id: generateUniqueId(),
-      role: 'user',
-      content: input,
+      role: 'assistant',
+      content: data.response || 'Sorry, I encountered an error.',
+      citations: data.citations || [],
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setLoading(true);
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input, pdfId }),
-      });
-
-      const data = await response.json();
-
-      const assistantMessage: ChatMessage = {
-        id: generateUniqueId(),
-        role: 'assistant',
-        content: data.response || 'Sorry, I encountered an error.',
-        citations: data.citations || [],
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error('Chat error:', error);
-    } finally {
-      setLoading(false);
+    const finalMessages = [...newMessages, assistantMessage];
+    setMessages(finalMessages);
+    
+    if (onChatUpdate) {
+      onChatUpdate(activeChatId, title, finalMessages);
     }
-  };
+
+  } catch (error) {
+    console.error('Chat error:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a]">
@@ -105,10 +143,7 @@ export function ChatInterface({
       <div className="flex-1 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full px-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-6">
-              <Bot className="h-8 w-8 text-white" />
-            </div>
-            <h2 className="text-2xl font-semibold text-white mb-3">
+            <h2 className="text-3xl font-semibold text-white mb-3">
               How can I help you today?
             </h2>
             <p className="text-gray-400 text-center max-w-md">
@@ -116,106 +151,91 @@ export function ChatInterface({
             </p>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+          <div className="max-w-4xl mx-auto px-4 py-8">
             {messages.map((msg) => (
-              <div key={msg.id} className="space-y-3">
+              <div key={msg.id} className={cn(
+                "mb-8 flex",
+                msg.role === 'user' ? 'justify-end' : 'justify-start'
+              )}>
                 <div className={cn(
-                  "flex gap-4",
-                  msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                  "max-w-[80%] space-y-2",
+                  msg.role === 'user' ? 'items-end' : 'items-start'
                 )}>
+                  {/* Message Bubble */}
                   <div className={cn(
-                    "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-                    msg.role === 'user' 
-                      ? 'bg-blue-600' 
-                      : 'bg-gradient-to-br from-green-500 to-emerald-600'
+                    "rounded-2xl px-5 py-3",
+                    msg.role === 'user'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-[#2f2f2f] text-gray-100'
                   )}>
-                    {msg.role === 'user' ? (
-                      <User className="h-5 w-5 text-white" />
-                    ) : (
-                      <Bot className="h-5 w-5 text-white" />
-                    )}
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {msg.content}
+                    </p>
                   </div>
 
-                  <div className={cn(
-                    "flex-1 space-y-2",
-                    msg.role === 'user' ? 'items-end' : 'items-start'
-                  )}>
-                    <div className={cn(
-                      "inline-block rounded-2xl px-4 py-3 max-w-[85%]",
-                      msg.role === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-[#1a1a1a] text-gray-100 border border-gray-800'
-                    )}>
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {msg.content}
-                      </p>
+                  {/* Action Buttons (Assistant Only) */}
+                  {msg.role === 'assistant' && (
+                    <div className="flex gap-2 mt-2 flex-wrap">
+                      {onGenerateQuiz && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={onGenerateQuiz}
+                          className="bg-[#1a1a1a] border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white text-xs"
+                        >
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          Generate Quiz
+                        </Button>
+                      )}
+                      {onShowVideos && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={onShowVideos}
+                          className="bg-[#1a1a1a] border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white text-xs"
+                        >
+                          <Youtube className="h-3 w-3 mr-1" />
+                          Videos
+                        </Button>
+                      )}
+                      {onShowProgress && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={onShowProgress}
+                          className="bg-[#1a1a1a] border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white text-xs"
+                        >
+                          <BarChart3 className="h-3 w-3 mr-1" />
+                          Progress
+                        </Button>
+                      )}
                     </div>
+                  )}
 
-                    {msg.role === 'assistant' && (
-                      <div className="flex gap-2 mt-2">
-                        {onGenerateQuiz && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onGenerateQuiz}
-                            className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
-                          >
-                            <Sparkles className="h-3 w-3 mr-1" />
-                            Generate Quiz
-                          </Button>
-                        )}
-                        {onShowVideos && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onShowVideos}
-                            className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
-                          >
-                            <Youtube className="h-3 w-3 mr-1" />
-                            Videos
-                          </Button>
-                        )}
-                        {onShowProgress && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onShowProgress}
-                            className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
-                          >
-                            <BarChart3 className="h-3 w-3 mr-1" />
-                            Progress
-                          </Button>
-                        )}
-                      </div>
-                    )}
-
-                    {msg.citations && msg.citations.length > 0 && (
-                      <div className="space-y-1 mt-2 max-w-[85%]">
-                        <p className="text-xs text-gray-500 font-medium">Sources:</p>
-                        {msg.citations.map((citation, idx) => (
-                          <div
-                            key={`citation-${msg.id}-${idx}`}
-                            className="text-xs bg-[#1a1a1a] border border-gray-800 rounded-lg p-2"
-                          >
-                            <Badge variant="secondary" className="text-xs mb-1 bg-gray-800">
-                              Page {citation.page}
-                            </Badge>
-                            <p className="text-gray-400 italic">"{citation.quote}"</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  {/* Citations */}
+                  {msg.citations && msg.citations.length > 0 && (
+                    <div className="space-y-1 mt-2">
+                      <p className="text-xs text-gray-500 font-medium">Sources:</p>
+                      {msg.citations.map((citation, idx) => (
+                        <div
+                          key={`citation-${msg.id}-${idx}`}
+                          className="text-xs bg-[#1a1a1a] border border-gray-800 rounded-lg p-2"
+                        >
+                          <Badge variant="secondary" className="text-xs mb-1 bg-gray-800 text-gray-300">
+                            Page {citation.page}
+                          </Badge>
+                          <p className="text-gray-400 italic">"{citation.quote}"</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
 
             {loading && (
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                  <Bot className="h-5 w-5 text-white" />
-                </div>
-                <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl px-4 py-3">
+              <div className="mb-8 flex justify-start">
+                <div className="bg-[#2f2f2f] rounded-2xl px-5 py-3">
                   <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
                 </div>
               </div>
@@ -226,20 +246,19 @@ export function ChatInterface({
         )}
       </div>
 
-      {/* Input Area - ChatGPT Style with + Button */}
+      {/* Input Area - ChatGPT Style */}
       <div className="border-t border-gray-800 bg-[#0a0a0a] p-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="relative flex items-end gap-2 bg-[#2f2f2f] rounded-3xl px-4 py-3 shadow-lg">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative flex items-end gap-2 bg-[#2f2f2f] rounded-3xl px-4 py-3">
             {/* Plus Button for Upload */}
-            
             <Sheet>
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="flex-shrink-0 h-8 w-8 rounded-full hover:bg-gray-700"
+                  className="flex-shrink-0 h-8 w-8 rounded-full hover:bg-gray-700 text-gray-400"
                 >
-                  <Plus className="h-5 w-5 text-gray-400" />
+                  <Plus className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-96 bg-[#171717] border-gray-800">
@@ -259,7 +278,6 @@ export function ChatInterface({
               </SheetContent>
             </Sheet>
 
-
             {/* Text Input */}
             <Textarea
               ref={textareaRef}
@@ -275,7 +293,6 @@ export function ChatInterface({
               disabled={loading}
               className="flex-1 resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 max-h-32 text-gray-100 placeholder:text-gray-500 min-h-[24px]"
               rows={1}
-              style={{ height: 'auto' }}
             />
 
             {/* Send Button */}

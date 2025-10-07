@@ -103,7 +103,7 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
       <Card className="bg-[#1a1a1a] border-gray-800">
         <CardContent className="pt-6">
           <div className="flex flex-col items-center justify-center h-64">
-            <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
+            <Loader2 className="h-12 w-12 animate-spin text-emerald-500 mb-4" />
             <p className="text-gray-400">Generating quiz questions...</p>
             <p className="text-sm text-gray-500 mt-2">This may take 30-60 seconds</p>
           </div>
@@ -119,7 +119,7 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
           <div className="text-center py-12">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <p className="text-red-400 mb-4">{error}</p>
-            <Button onClick={generateQuiz} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={generateQuiz} className="bg-emerald-600 hover:bg-emerald-700 text-white">
               Try Again
             </Button>
           </div>
@@ -133,14 +133,14 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
       <Card className="bg-[#1a1a1a] border-gray-800">
         <CardContent className="pt-6">
           <div className="text-center py-12">
-            <Sparkles className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+            <Sparkles className="h-16 w-16 text-emerald-500 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-white mb-2">
               Ready to test your knowledge?
             </h3>
             <p className="text-gray-400 mb-6">
               Generate a comprehensive quiz from your PDF
             </p>
-            <Button onClick={generateQuiz} size="lg" className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={generateQuiz} size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white">
               Generate Quiz
             </Button>
             <p className="text-xs text-gray-500 mt-3">10 MCQs • 10 SAQs • 10 LAQs</p>
@@ -153,10 +153,10 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
   if (showResults) {
     return (
       <div className="space-y-4">
-        <Card className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 border-gray-800">
+        <Card className="bg-gradient-to-br from-emerald-900/20 to-teal-900/20 border-gray-800">
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-5xl font-bold mb-2 text-blue-400">{score.toFixed(1)}%</div>
+              <div className="text-5xl font-bold mb-2 text-emerald-400">{score.toFixed(1)}%</div>
               <Progress value={score} className="h-3 mb-2" />
               <p className="text-sm text-gray-400">
                 {Math.round((score / 100) * questions.length)} out of {questions.length} correct
@@ -210,7 +210,7 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
         <Button 
           onClick={() => generateQuiz()} 
           size="lg" 
-          className="w-full bg-blue-600 hover:bg-blue-700"
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
         >
           Generate New Quiz
         </Button>
@@ -244,8 +244,8 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
           >
             <div className="space-y-2">
               {currentQuestion.options.map((option, idx) => (
-                <div key={idx} className="flex items-center space-x-3 border border-gray-700 rounded-lg p-3 hover:bg-gray-800 transition-colors">
-                  <RadioGroupItem value={option} id={`${currentQuestion.id}-${idx}`} />
+                <div key={idx} className="flex items-center space-x-3 border border-gray-700 rounded-lg p-3 hover:bg-gray-800/50 transition-colors">
+                  <RadioGroupItem value={option} id={`${currentQuestion.id}-${idx}`} className="text-emerald-500" />
                   <Label htmlFor={`${currentQuestion.id}-${idx}`} className="flex-1 cursor-pointer text-gray-200">
                     {option}
                   </Label>
@@ -270,7 +270,7 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
             variant="outline"
             onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
             disabled={currentIndex === 0}
-            className="border-gray-700 text-gray-300 hover:bg-gray-800"
+            className="bg-[#2f2f2f] border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white disabled:bg-gray-800 disabled:text-gray-600"
           >
             Previous
           </Button>
@@ -278,14 +278,14 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
           {currentIndex < questions.length - 1 ? (
             <Button 
               onClick={() => setCurrentIndex(prev => prev + 1)}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
               Next
             </Button>
           ) : (
             <Button 
               onClick={handleSubmit} 
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 text-white"
             >
               Submit Quiz
             </Button>

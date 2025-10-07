@@ -46,14 +46,15 @@ export function PDFViewerClient({ url }: PDFViewerClientProps) {
 
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a]">
+      {/* PDF Controls - Dark Theme */}
       <div className="flex items-center justify-between p-3 border-b border-gray-800 bg-[#171717]">
         <div className="flex items-center gap-2">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => setPageNumber(prev => Math.max(1, prev - 1))}
             disabled={pageNumber <= 1 || loading || !!error}
-            className="h-8 w-8 p-0 border-gray-700 text-gray-300 hover:bg-gray-800"
+            className="h-8 w-8 p-0 bg-[#2f2f2f] border-0 text-gray-300 hover:bg-gray-700 hover:text-white disabled:bg-gray-800 disabled:text-gray-600"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -63,11 +64,11 @@ export function PDFViewerClient({ url }: PDFViewerClientProps) {
           </span>
           
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => setPageNumber(prev => Math.min(numPages, prev + 1))}
             disabled={pageNumber >= numPages || loading || !!error}
-            className="h-8 w-8 p-0 border-gray-700 text-gray-300 hover:bg-gray-800"
+            className="h-8 w-8 p-0 bg-[#2f2f2f] border-0 text-gray-300 hover:bg-gray-700 hover:text-white disabled:bg-gray-800 disabled:text-gray-600"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -75,11 +76,11 @@ export function PDFViewerClient({ url }: PDFViewerClientProps) {
 
         <div className="flex items-center gap-2">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => setScale(prev => Math.max(0.5, prev - 0.1))}
             disabled={loading || !!error}
-            className="h-8 w-8 p-0 border-gray-700 text-gray-300 hover:bg-gray-800"
+            className="h-8 w-8 p-0 bg-[#2f2f2f] border-0 text-gray-300 hover:bg-gray-700 hover:text-white disabled:bg-gray-800 disabled:text-gray-600"
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
@@ -89,17 +90,18 @@ export function PDFViewerClient({ url }: PDFViewerClientProps) {
           </span>
           
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => setScale(prev => Math.min(2.0, prev + 0.1))}
             disabled={loading || !!error}
-            className="h-8 w-8 p-0 border-gray-700 text-gray-300 hover:bg-gray-800"
+            className="h-8 w-8 p-0 bg-[#2f2f2f] border-0 text-gray-300 hover:bg-gray-700 hover:text-white disabled:bg-gray-800 disabled:text-gray-600"
           >
             <ZoomIn className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
+      {/* PDF Display Area */}
       <div className="flex-1 overflow-auto bg-[#1a1a1a] flex items-center justify-center p-4">
         {error ? (
           <div className="text-center max-w-md">
@@ -111,7 +113,7 @@ export function PDFViewerClient({ url }: PDFViewerClientProps) {
             </p>
             <Button 
               onClick={handleRetry}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Retry
@@ -124,7 +126,7 @@ export function PDFViewerClient({ url }: PDFViewerClientProps) {
             onLoadError={onDocumentLoadError}
             loading={
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
                 <p className="text-gray-400">Loading PDF...</p>
               </div>
             }

@@ -57,7 +57,7 @@ export function ProgressDashboard({ pdfId }: ProgressDashboardProps) {
       <Card className="bg-[#1a1a1a] border-gray-800">
         <CardContent className="pt-6">
           <div className="flex items-center justify-center h-64">
-            <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+            <Loader2 className="h-12 w-12 animate-spin text-emerald-500" />
           </div>
         </CardContent>
       </Card>
@@ -66,17 +66,12 @@ export function ProgressDashboard({ pdfId }: ProgressDashboardProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Your Progress</h2>
-        <p className="text-gray-400">Track your learning journey and performance</p>
-      </div>
-
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-blue-900/20 to-blue-800/10 border-gray-800">
+        <Card className="bg-gradient-to-br from-emerald-900/20 to-emerald-800/10 border-gray-800">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-300">Average Score</CardTitle>
-            <Target className="h-4 w-4 text-blue-400" />
+            <Target className="h-4 w-4 text-emerald-400" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-white">{averageScore.toFixed(1)}%</div>
@@ -148,8 +143,8 @@ export function ProgressDashboard({ pdfId }: ProgressDashboardProps) {
                     variant={attempt.score >= 70 ? 'default' : 'secondary'}
                     className={
                       attempt.score >= 70 
-                        ? 'bg-green-600 hover:bg-green-700' 
-                        : 'bg-gray-700'
+                        ? 'bg-green-600 hover:bg-green-700 text-white' 
+                        : 'bg-gray-700 text-gray-300'
                     }
                   >
                     {attempt.score.toFixed(1)}%
@@ -160,23 +155,6 @@ export function ProgressDashboard({ pdfId }: ProgressDashboardProps) {
           )}
         </CardContent>
       </Card>
-
-      {/* Performance Chart Placeholder */}
-      {attempts.length > 0 && (
-        <Card className="bg-[#1a1a1a] border-gray-800">
-          <CardHeader>
-            <CardTitle className="text-white">Performance Trend</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-48 flex items-center justify-center border border-gray-800 rounded-lg bg-[#0a0a0a]">
-              <div className="text-center">
-                <TrendingUp className="h-8 w-8 text-gray-700 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Chart visualization coming soon</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
