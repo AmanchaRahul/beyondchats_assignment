@@ -13,7 +13,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log('Parsing PDF with Unstructured.io...');
 
     // Send to Unstructured.io API
     const unstructuredFormData = new FormData();
@@ -34,7 +33,6 @@ export async function POST(req: NextRequest) {
 
     const parsedData = response.data;
     
-    console.log('PDF parsed successfully. Elements:', parsedData.length);
 
     // Extract page numbers and text
     const elementsWithPages = parsedData.map((element: any, index: number) => {

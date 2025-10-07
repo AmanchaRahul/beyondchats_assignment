@@ -81,12 +81,8 @@ export function ChatInterface({
   const handleSend = async () => {
   if (!input.trim()) return;
   
-  // If no chatId, create one automatically
-  let activeChatId = chatId;
-  if (!activeChatId) {
-    activeChatId = Date.now().toString();
-    console.warn('No chatId provided, created:', activeChatId);
-  }
+  // If no chatId, create one automatically without logging
+  let activeChatId = chatId || Date.now().toString();
 
   const userMessage: ChatMessage = {
     id: generateUniqueId(),

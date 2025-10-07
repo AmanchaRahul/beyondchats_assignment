@@ -13,7 +13,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log('Processing chat message:', message);
 
     // Generate embedding for user query
     const queryEmbedding = await openai.embeddings.create({
@@ -32,7 +31,6 @@ export async function POST(req: NextRequest) {
       ...(whereFilter && { where: whereFilter }),
     });
 
-    console.log('ChromaDB results:', results.documents[0]?.length || 0, 'chunks');
 
     // Check if we have results
     if (!results.documents || !results.documents[0] || results.documents[0].length === 0) {
@@ -63,7 +61,6 @@ export async function POST(req: NextRequest) {
 
     const context = contextParts.join('\n\n');
 
-    console.log('Generating response with citations...');
 
     // Generate response with citation instructions
     const completion = await openai.chat.completions.create({
@@ -93,7 +90,6 @@ ${context}`,
 
     const response = completion.choices[0].message.content || "No response generated.";
 
-    console.log('Response generated with citations');
 
     return NextResponse.json({
       success: true,

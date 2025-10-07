@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
     // If no manual topic, extract key topics from PDF using GPT
     if (!topic && pdfContent) {
-      console.log('Extracting main topics from PDF content...');
+      // Extract a concise topic from the content for searching
       
       try {
         const topicExtraction = await openai.chat.completions.create({
@@ -37,7 +37,6 @@ export async function POST(req: NextRequest) {
         });
 
         searchQuery = topicExtraction.choices[0].message.content?.trim() || 'physics education';
-        console.log('Extracted topic:', searchQuery);
         
       } catch (extractError) {
         console.error('Topic extraction failed, using fallback');
@@ -59,10 +58,10 @@ export async function POST(req: NextRequest) {
 
     const enhancedQuery = `${searchQuery} tutorial explanation`;
 
-    console.log('Searching YouTube for:', enhancedQuery);
+    // Perform YouTube search
 
     if (!process.env.YOUTUBE_API_KEY) {
-      console.warn('YouTube API key not set, using mock data');
+      console.warn('YouTube API key not set; returning mock data');
       return getMockVideos(enhancedQuery);
     }
 
@@ -97,7 +96,7 @@ export async function POST(req: NextRequest) {
         embedUrl: `https://www.youtube.com/embed/${item.id.videoId}`,
       }));
 
-      console.log('Found', videos.length, 'YouTube videos');
+      // Return videos found
 
       return NextResponse.json({ 
         success: true, 
@@ -109,7 +108,7 @@ export async function POST(req: NextRequest) {
       console.error('YouTube API error:', apiError.response?.data || apiError.message);
       
       if (apiError.response?.status === 403) {
-        console.log('YouTube API quota exceeded, using mock data');
+        console.warn('YouTube API quota exceeded; returning mock data');
         return getMockVideos(enhancedQuery);
       }
       

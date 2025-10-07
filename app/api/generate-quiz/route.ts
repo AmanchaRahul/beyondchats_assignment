@@ -50,7 +50,6 @@ Format:
   }
 ]`;
 
-    console.log('Generating quiz with OpenAI...');
     
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -93,14 +92,12 @@ Format:
       }
     }
 
-    console.log('Parsing quiz response...');
     const questions = JSON.parse(cleanedResponse);
 
     if (!Array.isArray(questions) || questions.length === 0) {
       throw new Error('Invalid questions format');
     }
 
-    console.log(`Generated ${questions.length} questions successfully`);
 
     return NextResponse.json({ 
       success: true, 

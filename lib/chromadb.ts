@@ -10,11 +10,9 @@ export const chromaClient = new CloudClient({
 // Helper function to get or create collection
 export const getOrCreateCollection = async (collectionName: string = 'pdf_embeddings') => {
   try {
-    console.log('Getting or creating collection:', collectionName);
     const collection = await chromaClient.getOrCreateCollection({
       name: collectionName,
     });
-    console.log('Collection ready');
     return collection;
   } catch (error) {
     console.error('ChromaDB collection error:', error);

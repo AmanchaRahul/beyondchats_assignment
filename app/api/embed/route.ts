@@ -19,7 +19,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log('Creating embeddings for', chunks.length, 'chunks');
 
     // Get or create collection
     const collection = await getOrCreateCollection('pdf_embeddings');
@@ -35,7 +34,6 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    console.log('Embeddings generated, storing in ChromaDB...');
 
     // Store in ChromaDB Cloud with proper metadata
     await collection.add({
@@ -50,7 +48,6 @@ export async function POST(req: NextRequest) {
       })),
     });
 
-    console.log('Embeddings stored successfully in ChromaDB');
 
     return NextResponse.json({ 
       success: true, 

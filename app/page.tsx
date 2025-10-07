@@ -126,7 +126,6 @@ export default function Home() {
         .filter((text: string) => text.trim().length > 0)
         .join('\n');
       
-      console.log('✅ PDF Content Length:', content.length);
       setPdfContent(content);
       
       if (chunksWithPages.length > 0) {
@@ -151,20 +150,14 @@ export default function Home() {
 
   // HANDLERS WITH DEBUG LOGS
   const handleOpenQuiz = () => {
-    console.log('🎯 Opening Quiz Modal');
-    console.log('PDF Content Length:', pdfContent?.length);
-    console.log('Selected PDF:', selectedPdf);
     setShowQuizModal(true);
   };
 
   const handleOpenVideos = () => {
-    console.log('🎥 Opening Videos Panel');
-    console.log('PDF Content Length:', pdfContent?.length);
     setShowVideosPanel(true);
   };
 
   const handleOpenProgress = () => {
-    console.log('📊 Opening Progress Modal');
     setShowProgressModal(true);
   };
 

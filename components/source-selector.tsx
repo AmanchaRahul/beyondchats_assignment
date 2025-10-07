@@ -39,7 +39,6 @@ export function SourceSelector({ onSelect }: SourceSelectorProps) {
 
       if (data.success) {
         setStoredPdfs(data.pdfs);
-        console.log('Found PDFs:', data.pdfs.length);
       }
     } catch (error) {
       console.error('Failed to fetch stored PDFs:', error);
@@ -103,9 +102,6 @@ export function SourceSelector({ onSelect }: SourceSelectorProps) {
       .from('pdfs')
       .getPublicUrl(selectedSource);
 
-    console.log('Loading PDF:', selectedSource);
-    console.log('Public URL:', publicUrl);
-    
     onSelect(selectedSource, publicUrl);
   };
 
