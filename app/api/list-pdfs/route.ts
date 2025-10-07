@@ -27,9 +27,11 @@ export async function GET() {
       })) || [];
 
     return NextResponse.json({ success: true, pdfs: pdfFiles });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to list PDFs';
+    
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

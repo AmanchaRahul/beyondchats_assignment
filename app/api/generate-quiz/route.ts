@@ -15,10 +15,10 @@ export async function POST(req: NextRequest) {
     // Limit content to avoid token limits (use first 8000 characters)
     const limitedContent = content.substring(0, 8000);
 
-    const prompt = `Generate exactly 30 questions from the following content:
-- 10 Multiple Choice Questions (MCQs) with 4 options each
-- 10 Short Answer Questions (SAQs) 
-- 10 Long Answer Questions (LAQs)
+    const prompt = `Generate exactly ${questionCount} questions from the following content:
+- ${Math.floor(questionCount / 3)} Multiple Choice Questions (MCQs) with 4 options each
+- ${Math.floor(questionCount / 3)} Short Answer Questions (SAQs) 
+- ${questionCount - 2 * Math.floor(questionCount / 3)} Long Answer Questions (LAQs)
 
 Content: ${limitedContent}
 
@@ -98,21 +98,23 @@ Format:
       throw new Error('Invalid questions format');
     }
 
-
     return NextResponse.json({ 
       success: true, 
       questions,
       count: questions.length 
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Quiz generation error:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate quiz';
+    const errorDetails = error instanceof Error ? error.toString() : String(error);
     
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Failed to generate quiz',
-        details: error.toString()
+        error: errorMessage,
+        details: errorDetails
       },
       { status: 500 }
     );

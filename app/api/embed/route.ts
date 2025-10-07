@@ -19,7 +19,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-
     // Get or create collection
     const collection = await getOrCreateCollection('pdf_embeddings');
 
@@ -34,10 +33,9 @@ export async function POST(req: NextRequest) {
       })
     );
 
-
     // Store in ChromaDB Cloud with proper metadata
     await collection.add({
-      ids: chunks.map((_: any, i: number) => `${pdfId}_chunk_${i}`),
+      ids: chunks.map((_: ChunkWithMetadata, i: number) => `${pdfId}_chunk_${i}`),
       embeddings: embeddings,
       documents: chunks.map((chunk: ChunkWithMetadata) => chunk.text),
       metadatas: chunks.map((chunk: ChunkWithMetadata, i: number) => ({
@@ -48,17 +46,17 @@ export async function POST(req: NextRequest) {
       })),
     });
 
-
     return NextResponse.json({ 
       success: true, 
       message: 'Embeddings created successfully',
       chunksProcessed: chunks.length 
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Embedding error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create embeddings';
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to create embeddings' },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

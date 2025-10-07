@@ -92,8 +92,8 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
           timestamp: new Date().toISOString(),
         }),
       });
-    } catch (_error) {
-      console.error('Failed to save attempt');
+    } catch (err) {
+      console.error('Failed to save attempt', err);
     }
   };
 

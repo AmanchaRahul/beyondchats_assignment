@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getOrCreateCollection } from '@/lib/chromadb';
 import { openai } from '@/lib/openai';
 
+// Define interface for ChromaDB metadata
+interface ChromaMetadata {
+  pageNumber?: number;
+  pdfId?: string;
+  [key: string]: unknown;
+}
+
+// Define interface for citation
+interface Citation {
+  page: number;
+  quote: string;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { message, pdfId } = await req.json();
@@ -12,7 +25,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
 
     // Generate embedding for user query
     const queryEmbedding = await openai.embeddings.create({
@@ -31,7 +43,6 @@ export async function POST(req: NextRequest) {
       ...(whereFilter && { where: whereFilter }),
     });
 
-
     // Check if we have results
     if (!results.documents || !results.documents[0] || results.documents[0].length === 0) {
       return NextResponse.json({
@@ -43,10 +54,13 @@ export async function POST(req: NextRequest) {
 
     // Build context with citations
     const contextParts: string[] = [];
-    const citations: Array<{page: number, quote: string}> = [];
+    const citations: Citation[] = [];
     
-    results.documents[0].forEach((doc: string, idx: number) => {
-      const metadata = results.metadatas[0][idx] as any;
+    results.documents[0].forEach((doc, idx) => {
+      // Filter out null documents
+      if (doc === null) return;
+      
+      const metadata = results.metadatas[0][idx] as ChromaMetadata;
       const pageNum = metadata?.pageNumber || idx + 1;
       
       // Get 2-3 lines (first 150 chars as a quote)
@@ -60,7 +74,6 @@ export async function POST(req: NextRequest) {
     });
 
     const context = contextParts.join('\n\n');
-
 
     // Generate response with citation instructions
     const completion = await openai.chat.completions.create({
@@ -90,19 +103,22 @@ ${context}`,
 
     const response = completion.choices[0].message.content || "No response generated.";
 
-
     return NextResponse.json({
       success: true,
       response,
       citations: citations.slice(0, 3), // Top 3 most relevant
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Chat error:', error);
+    
+    // Type guard for error handling
+    const errorMessage = error instanceof Error ? error.message : 'Failed to process chat';
+    
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Failed to process chat',
+        error: errorMessage,
       },
       { status: 500 }
     );

@@ -6,7 +6,6 @@ import { PDFViewerClient } from '@/components/pdf-viewer-client';
 import { QuizGenerator } from '@/components/quiz-generator';
 import { ProgressDashboard } from '@/components/progress-dashboard';
 import { YoutubeRecommendations } from '@/components/youtube-recommendations';
-import { SourceSelector } from '@/components/source-selector';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { 
@@ -78,7 +77,7 @@ export default function Home() {
       setChats([initialChat]);
       setCurrentChatId(initialChat.id);
     }
-  }, []);
+  }, [chats.length]);
 
   const handleNewChat = () => {
     const newChat: Chat = {
@@ -153,8 +152,9 @@ export default function Home() {
           body: JSON.stringify({ pdfId, chunks: chunksWithPages }),
         });
       }
-    } catch (error: any) {
-      setError(error.message || 'Failed to process PDF');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to process PDF';
+      setError(errorMessage);
     } finally {
       setProcessing(false);
     }

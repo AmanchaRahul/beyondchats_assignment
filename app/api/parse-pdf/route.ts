@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
+interface UnstructuredElement {
+  text?: string;
+  type?: string;
+  metadata?: {
+    page_number?: number;
+    page?: number;
+    [key: string]: unknown;
+  };
+}
+
+interface ParsedElement {
+  text: string;
+  pageNumber: number;
+  elementType: string;
+  metadata: Record<string, unknown>;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -13,7 +30,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-
     // Send to Unstructured.io API
     const unstructuredFormData = new FormData();
     unstructuredFormData.append('files', file);
@@ -21,7 +37,7 @@ export async function POST(req: NextRequest) {
     unstructuredFormData.append('coordinates', 'true'); // Get coordinates
     unstructuredFormData.append('output_format', 'application/json');
 
-    const response = await axios.post(
+    const response = await axios.post<UnstructuredElement[]>(
       process.env.UNSTRUCTURED_API_URL!,
       unstructuredFormData,
       {
@@ -33,9 +49,8 @@ export async function POST(req: NextRequest) {
 
     const parsedData = response.data;
     
-
     // Extract page numbers and text
-    const elementsWithPages = parsedData.map((element: any, index: number) => {
+    const elementsWithPages: ParsedElement[] = parsedData.map((element: UnstructuredElement, index: number) => {
       return {
         text: element.text || '',
         pageNumber: element.metadata?.page_number || 
@@ -51,10 +66,13 @@ export async function POST(req: NextRequest) {
       data: elementsWithPages 
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('PDF parsing error:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Failed to parse PDF';
+    
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to parse PDF' },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

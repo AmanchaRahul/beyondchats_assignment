@@ -1,6 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { openai } from '@/lib/openai';
+
+interface YouTubeVideoItem {
+  id: {
+    videoId: string;
+  };
+  snippet: {
+    title: string;
+    description: string;
+    thumbnails: {
+      medium: {
+        url: string;
+      };
+    };
+    channelTitle: string;
+    publishedAt: string;
+  };
+}
+
+interface ProcessedVideo {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  channelTitle: string;
+  publishedAt: string;
+  url: string;
+  embedUrl: string;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,7 +66,7 @@ export async function POST(req: NextRequest) {
 
         searchQuery = topicExtraction.choices[0].message.content?.trim() || 'physics education';
         
-      } catch (extractError) {
+      } catch {
         console.error('Topic extraction failed, using fallback');
         // Fallback: Try to find common educational keywords
         const educationalKeywords = [
@@ -85,7 +113,7 @@ export async function POST(req: NextRequest) {
         }
       );
 
-      const videos = response.data.items.map((item: any) => ({
+      const videos: ProcessedVideo[] = response.data.items.map((item: YouTubeVideoItem) => ({
         id: item.id.videoId,
         title: item.snippet.title,
         description: item.snippet.description,
@@ -104,10 +132,10 @@ export async function POST(req: NextRequest) {
         searchQuery: enhancedQuery 
       });
 
-    } catch (apiError: any) {
-      console.error('YouTube API error:', apiError.response?.data || apiError.message);
+    } catch (apiError: unknown) {
+      console.error('YouTube API error:', apiError);
       
-      if (apiError.response?.status === 403) {
+      if (axios.isAxiosError(apiError) && apiError.response?.status === 403) {
         console.warn('YouTube API quota exceeded; returning mock data');
         return getMockVideos(enhancedQuery);
       }
@@ -115,13 +143,26 @@ export async function POST(req: NextRequest) {
       throw apiError;
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('YouTube search error:', error);
+    
+    let errorMessage = 'Failed to search YouTube';
+    let errorDetails: string | undefined;
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      errorDetails = error.toString();
+    }
+    
+    if (axios.isAxiosError(error)) {
+      errorDetails = JSON.stringify(error.response?.data) || error.toString();
+    }
+    
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Failed to search YouTube',
-        details: error.response?.data || error.toString()
+        error: errorMessage,
+        details: errorDetails
       },
       { status: 500 }
     );
@@ -129,7 +170,7 @@ export async function POST(req: NextRequest) {
 }
 
 function getMockVideos(query: string) {
-  const mockVideos = [
+  const mockVideos: ProcessedVideo[] = [
     {
       id: 'dQw4w9WgXcQ',
       title: 'NCERT Physics Class 11 Complete Tutorial',

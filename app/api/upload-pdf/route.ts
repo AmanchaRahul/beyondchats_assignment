@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const fileBuffer = await file.arrayBuffer();
     
     // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('pdfs')
       .upload(fileName, fileBuffer, {
         contentType: 'application/pdf',
@@ -36,10 +36,13 @@ export async function POST(req: NextRequest) {
       fileName,
       url: urlData.publicUrl,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Upload error:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Failed to upload PDF';
+    
     return NextResponse.json(
-      { success: false, error: 'Failed to upload PDF' },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

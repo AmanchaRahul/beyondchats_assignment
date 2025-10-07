@@ -132,7 +132,6 @@ export function ChatInterface({
   }
 };
 
-
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a]">
       {/* Messages Area */}

@@ -38,12 +38,15 @@ export async function GET(req: NextRequest) {
       success: true, 
       attempts: data || [] 
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get progress error:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch progress';
+    
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Failed to fetch progress',
+        error: errorMessage,
         attempts: [] // Return empty array on error
       },
       { status: 200 } // Return 200 to prevent app crash
