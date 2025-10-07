@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
     return config;
   },
   reactStrictMode: true,
+  eslint: {
+    // Build should not fail due to stale or non-critical lint issues on CI
+    ignoreDuringBuilds: false,
+  },
   images: {
     remotePatterns: [
       {
