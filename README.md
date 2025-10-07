@@ -113,12 +113,16 @@ Open `http://localhost:3000` in your browser.
 - OpenAI models (`gpt-4o-mini`, `text-embedding-3-small`) for chat, topic extraction, and quiz generation.
 - I have used **Claude** and **Cursor** to assist with coding during implementation.
 
-## Deployment to Vercel
+## Deployment to Render
 
 ### One-time configuration
 1. Push this repository to GitHub/GitLab/Bitbucket.
-2. In Vercel, import the project.
-3. Set the following Environment Variables in the Vercel dashboard (Project → Settings → Environment Variables):
+2. In Render, create a new Web Service:
+   - Select your repository
+   - Choose "Node" as the environment
+   - Set Build Command: `npm install && npm run build`
+   - Set Start Command: `npm start`
+3. Set the following Environment Variables in the Render dashboard (Environment tab):
    - `OPENAI_API_KEY`
    - `CHROMA_API_KEY`
    - `CHROMA_TENANT`
@@ -128,14 +132,17 @@ Open `http://localhost:3000` in your browser.
    - `UNSTRUCTURED_API_URL`
    - `UNSTRUCTURED_API_KEY`
    - `YOUTUBE_API_KEY` (optional)
-4. Build & Output settings: use defaults (Framework Preset: Next.js). No custom build command needed.
+   - `NODE_VERSION` = `18` (or higher, recommended 20)
+4. Select an appropriate instance type (Free tier works for testing, but paid tiers recommended for production).
 
 ### CORS and storage
 - If using public Supabase storage for PDFs, ensure the bucket policy permits public read and that the PDF URL is accessible from the deployed domain.
 - If private, generate signed URLs on the server and pass them to the client, and configure appropriate CORS.
 
 ### Deploy
-- Trigger a deployment by pushing to `main` (or click Deploy in Vercel). Once complete, open the assigned URL.
+- Render will automatically deploy when you push to your connected branch (usually `main`). 
+- You can also manually trigger a deployment from the Render dashboard.
+- Once deployment is complete, access your application via the Render-provided URL (e.g., `https://your-app-name.onrender.com`).
 
 ## Notes/Troubleshooting
 - If the PDF viewer fails due to worker issues, confirm the `pdfjs` worker URL in `components/pdf-viewer-client.tsx` matches the installed `pdfjs-dist` version.
