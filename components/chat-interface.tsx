@@ -4,8 +4,25 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Send, Menu, Bot, User, Loader2 } from 'lucide-react';
-import { ChatSidebar } from '@/components/chat-sidebar';
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetTrigger, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription 
+} from '@/components/ui/sheet';
+import { 
+  Send, 
+  Sparkles, 
+  Youtube, 
+  BarChart3, 
+  Loader2, 
+  User, 
+  Bot, 
+  Plus 
+} from 'lucide-react';
+import { SourceSelector } from '@/components/source-selector';
 import { cn } from '@/lib/utils';
 
 interface ChatMessage {
@@ -13,94 +30,48 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   citations?: Array<{page: number, quote: string}>;
-  timestamp: Date;
-}
-
-interface Chat {
-  id: string;
-  title: string;
-  timestamp: Date;
-  messages: ChatMessage[];
 }
 
 interface ChatInterfaceProps {
   pdfId: string;
+  onGenerateQuiz?: () => void;
+  onShowProgress?: () => void;
+  onShowVideos?: () => void;
+  onPdfSelect?: (id: string, url: string) => void;
 }
 
-// Helper function to generate unique IDs
 let idCounter = 0;
 function generateUniqueId(): string {
   return `${Date.now()}_${++idCounter}_${Math.random().toString(36).substring(2, 9)}`;
 }
 
-export function ChatInterface({ pdfId }: ChatInterfaceProps) {
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+export function ChatInterface({
+  pdfId,
+  onGenerateQuiz,
+  onShowProgress,
+  onShowVideos,
+  onPdfSelect,  // ADD THIS
+}: ChatInterfaceProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const currentChat = chats.find(c => c.id === currentChatId);
-  const messages = currentChat?.messages || [];
-
   useEffect(() => {
-    // Create initial chat if none exists
-    if (chats.length === 0) {
-      handleNewChat();
-    }
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleNewChat = () => {
-    const newChat: Chat = {
-      id: generateUniqueId(),
-      title: 'New conversation',
-      timestamp: new Date(),
-      messages: [],
-    };
-    setChats(prev => [newChat, ...prev]);
-    setCurrentChatId(newChat.id);
-    setIsMobileSidebarOpen(false);
-  };
-
-  const handleDeleteChat = (chatId: string) => {
-    setChats(prev => prev.filter(c => c.id !== chatId));
-    if (currentChatId === chatId) {
-      const remainingChats = chats.filter(c => c.id !== chatId);
-      setCurrentChatId(remainingChats[0]?.id || null);
-    }
-  };
-
   const handleSend = async () => {
-    if (!input.trim() || !currentChatId) return;
+    if (!input.trim()) return;
 
     const userMessage: ChatMessage = {
       id: generateUniqueId(),
       role: 'user',
       content: input,
-      timestamp: new Date(),
     };
 
-    // Add user message
-    setChats(prev => prev.map(chat =>
-      chat.id === currentChatId
-        ? { 
-            ...chat, 
-            messages: [...chat.messages, userMessage], 
-            title: chat.messages.length === 0 ? input.substring(0, 30) : chat.title 
-          }
-        : chat
-    ));
-
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
 
@@ -118,15 +89,9 @@ export function ChatInterface({ pdfId }: ChatInterfaceProps) {
         role: 'assistant',
         content: data.response || 'Sorry, I encountered an error.',
         citations: data.citations || [],
-        timestamp: new Date(),
       };
 
-      setChats(prev => prev.map(chat =>
-        chat.id === currentChatId
-          ? { ...chat, messages: [...chat.messages, assistantMessage] }
-          : chat
-      ));
-
+      setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Chat error:', error);
     } finally {
@@ -134,154 +99,199 @@ export function ChatInterface({ pdfId }: ChatInterfaceProps) {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
   return (
-    <div className="flex h-full bg-white">
-      {/* Sidebar */}
-      <ChatSidebar
-        chats={chats}
-        currentChatId={currentChatId}
-        onSelectChat={setCurrentChatId}
-        onNewChat={handleNewChat}
-        onDeleteChat={handleDeleteChat}
-        isMobileOpen={isMobileSidebarOpen}
-        onMobileToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-      />
-
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="h-14 border-b border-gray-200 flex items-center px-4 bg-white">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden mr-2"
-            onClick={() => setIsMobileSidebarOpen(true)}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-semibold text-gray-800">
-            {currentChat?.title || 'StudyMate AI'}
-          </h1>
-        </header>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto">
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center px-4">
-              <Bot className="h-16 w-16 text-gray-300 mb-4" />
-              <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-                How can I help you today?
-              </h2>
-              <p className="text-gray-600 max-w-md">
-                Ask me anything about your coursebook. I'll provide answers with citations from the source material.
-              </p>
+    <div className="flex flex-col h-full bg-[#0a0a0a]">
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto">
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full px-4">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-6">
+              <Bot className="h-8 w-8 text-white" />
             </div>
-          ) : (
-            <div className="max-w-3xl mx-auto px-4 py-8">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={cn(
-                    "flex gap-4 mb-8",
-                    msg.role === 'user' ? 'justify-end' : 'justify-start'
-                  )}
-                >
-                  {msg.role === 'assistant' && (
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
+            <h2 className="text-2xl font-semibold text-white mb-3">
+              How can I help you today?
+            </h2>
+            <p className="text-gray-400 text-center max-w-md">
+              Ask me anything about your coursebook. I'll provide answers with citations from the source material.
+            </p>
+          </div>
+        ) : (
+          <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+            {messages.map((msg) => (
+              <div key={msg.id} className="space-y-3">
+                <div className={cn(
+                  "flex gap-4",
+                  msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                )}>
+                  <div className={cn(
+                    "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+                    msg.role === 'user' 
+                      ? 'bg-blue-600' 
+                      : 'bg-gradient-to-br from-green-500 to-emerald-600'
+                  )}>
+                    {msg.role === 'user' ? (
+                      <User className="h-5 w-5 text-white" />
+                    ) : (
                       <Bot className="h-5 w-5 text-white" />
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   <div className={cn(
                     "flex-1 space-y-2",
                     msg.role === 'user' ? 'items-end' : 'items-start'
                   )}>
-                    <div
-                      className={cn(
-                        "rounded-2xl px-4 py-3 max-w-[85%] inline-block",
-                        msg.role === 'user'
-                          ? 'bg-blue-600 text-white ml-auto'
-                          : 'bg-gray-100 text-gray-900'
-                      )}
-                    >
-                      <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                    <div className={cn(
+                      "inline-block rounded-2xl px-4 py-3 max-w-[85%]",
+                      msg.role === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-[#1a1a1a] text-gray-100 border border-gray-800'
+                    )}>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {msg.content}
+                      </p>
                     </div>
+
+                    {msg.role === 'assistant' && (
+                      <div className="flex gap-2 mt-2">
+                        {onGenerateQuiz && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onGenerateQuiz}
+                            className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                          >
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            Generate Quiz
+                          </Button>
+                        )}
+                        {onShowVideos && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onShowVideos}
+                            className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                          >
+                            <Youtube className="h-3 w-3 mr-1" />
+                            Videos
+                          </Button>
+                        )}
+                        {onShowProgress && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onShowProgress}
+                            className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                          >
+                            <BarChart3 className="h-3 w-3 mr-1" />
+                            Progress
+                          </Button>
+                        )}
+                      </div>
+                    )}
 
                     {msg.citations && msg.citations.length > 0 && (
                       <div className="space-y-1 mt-2 max-w-[85%]">
+                        <p className="text-xs text-gray-500 font-medium">Sources:</p>
                         {msg.citations.map((citation, idx) => (
                           <div
                             key={`citation-${msg.id}-${idx}`}
-                            className="text-xs bg-gray-50 border border-gray-200 rounded-lg p-2"
+                            className="text-xs bg-[#1a1a1a] border border-gray-800 rounded-lg p-2"
                           >
-                            <Badge variant="secondary" className="text-xs mb-1">
+                            <Badge variant="secondary" className="text-xs mb-1 bg-gray-800">
                               Page {citation.page}
                             </Badge>
-                            <p className="text-gray-700 italic">"{citation.quote}"</p>
+                            <p className="text-gray-400 italic">"{citation.quote}"</p>
                           </div>
                         ))}
                       </div>
                     )}
                   </div>
-
-                  {msg.role === 'user' && (
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-                      <User className="h-5 w-5 text-white" />
-                    </div>
-                  )}
                 </div>
-              ))}
+              </div>
+            ))}
 
-              {loading && (
-                <div className="flex gap-4 mb-8">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
-                    <Bot className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="bg-gray-100 rounded-2xl px-4 py-3">
-                    <Loader2 className="h-5 w-5 animate-spin text-gray-600" />
-                  </div>
+            {loading && (
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                  <Bot className="h-5 w-5 text-white" />
                 </div>
-              )}
+                <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl px-4 py-3">
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                </div>
+              </div>
+            )}
 
-              <div ref={messagesEndRef} />
-            </div>
-          )}
-        </div>
-
-        {/* Input Area */}
-        <div className="border-t border-gray-200 bg-white p-4">
-          <div className="max-w-3xl mx-auto">
-            <div className="flex items-end gap-2 bg-white border border-gray-300 rounded-2xl p-2 shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
-              <Textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="Message StudyMate..."
-                disabled={loading}
-                className="flex-1 resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 max-h-32 bg-transparent"
-                rows={1}
-              />
-              <Button
-                onClick={handleSend}
-                disabled={loading || !input.trim()}
-                size="icon"
-                className="rounded-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-            <p className="text-xs text-gray-500 text-center mt-2">
-              StudyMate can make mistakes. Check important info.
-            </p>
+            <div ref={messagesEndRef} />
           </div>
+        )}
+      </div>
+
+      {/* Input Area - ChatGPT Style with + Button */}
+      <div className="border-t border-gray-800 bg-[#0a0a0a] p-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="relative flex items-end gap-2 bg-[#2f2f2f] rounded-3xl px-4 py-3 shadow-lg">
+            {/* Plus Button for Upload */}
+            
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="flex-shrink-0 h-8 w-8 rounded-full hover:bg-gray-700"
+                >
+                  <Plus className="h-5 w-5 text-gray-400" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-96 bg-[#171717] border-gray-800">
+                <SheetHeader>
+                  <SheetTitle className="text-white">Upload Document</SheetTitle>
+                  <SheetDescription className="text-gray-400">
+                    Select a PDF from your library or upload a new one
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="mt-6">
+                  <SourceSelector onSelect={(id, url) => {
+                    if (onPdfSelect) {
+                      onPdfSelect(id, url);
+                    }
+                  }} />
+                </div>
+              </SheetContent>
+            </Sheet>
+
+
+            {/* Text Input */}
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Message StudyMate..."
+              disabled={loading}
+              className="flex-1 resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 max-h-32 text-gray-100 placeholder:text-gray-500 min-h-[24px]"
+              rows={1}
+              style={{ height: 'auto' }}
+            />
+
+            {/* Send Button */}
+            <Button
+              onClick={handleSend}
+              disabled={loading || !input.trim()}
+              size="icon"
+              className="flex-shrink-0 h-8 w-8 rounded-full bg-white hover:bg-gray-200 disabled:bg-gray-700 text-black"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <p className="text-xs text-gray-500 text-center mt-2">
+            StudyMate can make mistakes. Check important info.
+          </p>
         </div>
       </div>
     </div>

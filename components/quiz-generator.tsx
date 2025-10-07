@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, AlertCircle, Sparkles } from 'lucide-react';
 
 interface Question {
   id: string;
@@ -35,7 +35,7 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
 
   const generateQuiz = async () => {
     if (!content || content.length < 100) {
-      setError('PDF content is too short. Please upload a larger document.');
+      setError('PDF content is too short.');
       return;
     }
 
@@ -43,8 +43,6 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
     setError(null);
 
     try {
-      console.log('Generating quiz from content length:', content.length);
-      
       const response = await fetch('/api/generate-quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -54,22 +52,16 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
       const data = await response.json();
       
       if (!response.ok || !data.success) {
-        throw new Error(data.error || data.details || 'Failed to generate quiz');
+        throw new Error(data.error || 'Failed to generate quiz');
       }
 
-      if (!data.questions || !Array.isArray(data.questions) || data.questions.length === 0) {
-        throw new Error('No questions generated');
-      }
-
-      console.log('Quiz generated successfully:', data.questions.length, 'questions');
       setQuestions(data.questions);
       setCurrentIndex(0);
       setUserAnswers({});
       setShowResults(false);
       
     } catch (error: any) {
-      console.error('Failed to generate quiz:', error);
-      setError(error.message || 'Failed to generate quiz. Please try again.');
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -80,41 +72,39 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
     questions.forEach(q => {
       const userAnswer = userAnswers[q.id]?.trim().toLowerCase();
       const correctAnswer = q.correctAnswer.trim().toLowerCase();
-      
-      if (userAnswer === correctAnswer) {
-        correct++;
-      }
+      if (userAnswer === correctAnswer) correct++;
     });
     
     const finalScore = (correct / questions.length) * 100;
     setScore(finalScore);
     setShowResults(true);
 
-    // Save attempt to Supabase
     try {
       await fetch('/api/save-attempt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           pdf_id: pdfId,
-          questions: questions,
+          questions,
           user_answers: userAnswers,
           score: finalScore,
           timestamp: new Date().toISOString(),
         }),
       });
     } catch (error) {
-      console.error('Failed to save attempt:', error);
+      console.error('Failed to save attempt');
     }
   };
 
+  const currentQuestion = questions[currentIndex];
+
   if (loading) {
     return (
-      <Card>
+      <Card className="bg-[#1a1a1a] border-gray-800">
         <CardContent className="pt-6">
           <div className="flex flex-col items-center justify-center h-64">
-            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
-            <p className="text-gray-600">Generating quiz questions...</p>
+            <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
+            <p className="text-gray-400">Generating quiz questions...</p>
             <p className="text-sm text-gray-500 mt-2">This may take 30-60 seconds</p>
           </div>
         </CardContent>
@@ -124,12 +114,14 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
 
   if (error) {
     return (
-      <Card>
+      <Card className="bg-[#1a1a1a] border-gray-800">
         <CardContent className="pt-6">
-          <div className="text-center">
+          <div className="text-center py-12">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <p className="text-red-600 mb-4">{error}</p>
-            <Button onClick={generateQuiz}>Try Again</Button>
+            <p className="text-red-400 mb-4">{error}</p>
+            <Button onClick={generateQuiz} className="bg-blue-600 hover:bg-blue-700">
+              Try Again
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -138,18 +130,20 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
 
   if (questions.length === 0) {
     return (
-      <Card>
+      <Card className="bg-[#1a1a1a] border-gray-800">
         <CardContent className="pt-6">
-          <div className="text-center">
-            <p className="text-gray-600 mb-4">
+          <div className="text-center py-12">
+            <Sparkles className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">
               Ready to test your knowledge?
+            </h3>
+            <p className="text-gray-400 mb-6">
+              Generate a comprehensive quiz from your PDF
             </p>
-            <Button onClick={generateQuiz} size="lg" className="w-full">
-              Generate Quiz (30 Questions)
+            <Button onClick={generateQuiz} size="lg" className="bg-blue-600 hover:bg-blue-700">
+              Generate Quiz
             </Button>
-            <p className="text-xs text-gray-500 mt-2">
-              10 MCQs -  10 SAQs -  10 LAQs
-            </p>
+            <p className="text-xs text-gray-500 mt-3">10 MCQs • 10 SAQs • 10 LAQs</p>
           </div>
         </CardContent>
       </Card>
@@ -158,78 +152,80 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
 
   if (showResults) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Quiz Results</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="text-center p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
-              <div className="text-5xl font-bold mb-2 text-blue-600">
-                {score.toFixed(1)}%
-              </div>
+      <div className="space-y-4">
+        <Card className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 border-gray-800">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <div className="text-5xl font-bold mb-2 text-blue-400">{score.toFixed(1)}%</div>
               <Progress value={score} className="h-3 mb-2" />
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-400">
                 {Math.round((score / 100) * questions.length)} out of {questions.length} correct
               </p>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="max-h-96 overflow-y-auto space-y-4">
-              {questions.map((q, idx) => {
-                const userAnswer = userAnswers[q.id] || 'Not answered';
-                const isCorrect = userAnswer.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
-                
-                return (
-                  <div key={q.id} className="border rounded-lg p-4 bg-white">
-                    <div className="flex items-start gap-2">
-                      {isCorrect ? (
-                        <CheckCircle className="h-5 w-5 text-green-600 mt-1 flex-shrink-0" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-red-600 mt-1 flex-shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium">Q{idx + 1}.</span>
-                          <Badge variant="outline" className="text-xs">
-                            {q.type.toUpperCase()}
-                          </Badge>
-                        </div>
-                        <p className="font-medium mb-2">{q.question}</p>
-                        <div className="text-sm space-y-1">
-                          <p className="text-gray-600">
-                            <strong>Your answer:</strong> {userAnswer}
-                          </p>
-                          <p className="text-green-600">
-                            <strong>Correct answer:</strong> {q.correctAnswer}
-                          </p>
-                          <p className="text-gray-700 bg-gray-50 p-2 rounded mt-2">
-                            <strong>Explanation:</strong> {q.explanation}
-                          </p>
+        <div className="max-h-[500px] overflow-y-auto space-y-3 pr-2">
+          {questions.map((q, idx) => {
+            const userAnswer = userAnswers[q.id] || 'Not answered';
+            const isCorrect = userAnswer.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
+            
+            return (
+              <Card key={q.id} className="bg-[#1a1a1a] border-gray-800">
+                <CardContent className="pt-4">
+                  <div className="flex items-start gap-3">
+                    {isCorrect ? (
+                      <CheckCircle className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-500 mt-1 flex-shrink-0" />
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-medium text-white">Q{idx + 1}.</span>
+                        <Badge variant="outline" className="text-xs bg-gray-800 text-gray-300">
+                          {q.type.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <p className="font-medium text-gray-200 mb-3">{q.question}</p>
+                      <div className="text-sm space-y-2">
+                        <p className="text-gray-400">
+                          <strong className="text-gray-300">Your answer:</strong> {userAnswer}
+                        </p>
+                        <p className="text-green-400">
+                          <strong>Correct:</strong> {q.correctAnswer}
+                        </p>
+                        <div className="bg-[#0a0a0a] border border-gray-800 p-3 rounded-lg mt-2">
+                          <p className="text-xs text-gray-500 font-medium mb-1">EXPLANATION</p>
+                          <p className="text-gray-300 text-sm">{q.explanation}</p>
                         </div>
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
 
-            <Button onClick={() => generateQuiz()} className="w-full" size="lg">
-              Generate New Quiz
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        <Button 
+          onClick={() => generateQuiz()} 
+          size="lg" 
+          className="w-full bg-blue-600 hover:bg-blue-700"
+        >
+          Generate New Quiz
+        </Button>
+      </div>
     );
   }
 
-  const currentQuestion = questions[currentIndex];
-
   return (
-    <Card>
+    <Card className="bg-[#1a1a1a] border-gray-800">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Question {currentIndex + 1} of {questions.length}</CardTitle>
-          <Badge variant="outline">
+          <CardTitle className="text-white">
+            Question {currentIndex + 1} of {questions.length}
+          </CardTitle>
+          <Badge variant="outline" className="bg-gray-800 text-gray-300">
             {currentQuestion.type.toUpperCase()}
           </Badge>
         </div>
@@ -237,7 +233,7 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <p className="text-lg font-medium">{currentQuestion.question}</p>
+        <p className="text-lg font-medium text-gray-200">{currentQuestion.question}</p>
 
         {currentQuestion.type === 'mcq' && currentQuestion.options ? (
           <RadioGroup
@@ -248,9 +244,9 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
           >
             <div className="space-y-2">
               {currentQuestion.options.map((option, idx) => (
-                <div key={idx} className="flex items-center space-x-2 border rounded p-3 hover:bg-gray-50">
-                  <RadioGroupItem value={option} id={`${currentQuestion.id}-option-${idx}`} />
-                  <Label htmlFor={`${currentQuestion.id}-option-${idx}`} className="flex-1 cursor-pointer">
+                <div key={idx} className="flex items-center space-x-3 border border-gray-700 rounded-lg p-3 hover:bg-gray-800 transition-colors">
+                  <RadioGroupItem value={option} id={`${currentQuestion.id}-${idx}`} />
+                  <Label htmlFor={`${currentQuestion.id}-${idx}`} className="flex-1 cursor-pointer text-gray-200">
                     {option}
                   </Label>
                 </div>
@@ -259,13 +255,13 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
           </RadioGroup>
         ) : (
           <Textarea
-            placeholder="Type your answer here..."
+            placeholder="Type your answer..."
             value={userAnswers[currentQuestion.id] || ''}
             onChange={(e) =>
               setUserAnswers({ ...userAnswers, [currentQuestion.id]: e.target.value })
             }
             rows={currentQuestion.type === 'laq' ? 6 : 3}
-            className="resize-none"
+            className="bg-[#0a0a0a] border-gray-700 text-gray-200 placeholder:text-gray-500"
           />
         )}
 
@@ -274,16 +270,23 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
             variant="outline"
             onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
             disabled={currentIndex === 0}
+            className="border-gray-700 text-gray-300 hover:bg-gray-800"
           >
             Previous
           </Button>
 
           {currentIndex < questions.length - 1 ? (
-            <Button onClick={() => setCurrentIndex(prev => prev + 1)}>
+            <Button 
+              onClick={() => setCurrentIndex(prev => prev + 1)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
               Next
             </Button>
           ) : (
-            <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
+            <Button 
+              onClick={handleSubmit} 
+              className="bg-green-600 hover:bg-green-700"
+            >
               Submit Quiz
             </Button>
           )}

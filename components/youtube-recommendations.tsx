@@ -4,10 +4,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Youtube, ExternalLink, Search } from 'lucide-react';
+import { Loader2, Youtube, ExternalLink, Search, Play } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-// Helper to extract meaningful topic from filename
 function extractTopicFromFilename(filename: string): string {
   const cleanName = filename
     .replace(/^\d+_/, '')
@@ -18,15 +17,9 @@ function extractTopicFromFilename(filename: string): string {
   if (cleanName.includes('ncert') || cleanName.includes('keph')) {
     return 'NCERT Physics Class 11';
   }
-  if (cleanName.includes('chemistry')) {
-    return 'Chemistry';
-  }
-  if (cleanName.includes('math')) {
-    return 'Mathematics';
-  }
-  if (cleanName.includes('biology')) {
-    return 'Biology';
-  }
+  if (cleanName.includes('chemistry')) return 'Chemistry';
+  if (cleanName.includes('math')) return 'Mathematics';
+  if (cleanName.includes('biology')) return 'Biology';
 
   return cleanName;
 }
@@ -56,12 +49,11 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
   const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
-    // Only auto-load once when component mounts with content
     if (!hasLoaded && pdfContent && pdfContent.length > 100) {
       loadRecommendations();
       setHasLoaded(true);
     }
-  }, [pdfContent, hasLoaded]); // Safe dependency array
+  }, [pdfContent, hasLoaded]);
 
   const loadRecommendations = async (topic?: string) => {
     setLoading(true);
@@ -70,10 +62,7 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
 
       if (!searchTopic && pdfId) {
         searchTopic = extractTopicFromFilename(pdfId);
-        console.log('Extracted topic from filename:', searchTopic);
       }
-
-      console.log('Fetching YouTube videos for:', searchTopic);
 
       const response = await fetch('/api/youtube-search', {
         method: 'POST',
@@ -84,24 +73,19 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
 
       if (data.success && data.videos) {
         setVideos(data.videos);
         setSearchQuery(data.searchQuery);
-        console.log('Loaded', data.videos.length, 'videos');
       } else {
-        console.error('Failed to load videos:', data.error);
-        setVideos([]); // Set empty array on error
+        setVideos([]);
       }
     } catch (error: any) {
       console.error('Error loading YouTube recommendations:', error);
-      setVideos([]); // Set empty array on error
-      // Don't throw - handle gracefully
+      setVideos([]);
     } finally {
       setLoading(false);
     }
@@ -115,11 +99,11 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
 
   if (loading && videos.length === 0) {
     return (
-      <Card>
+      <Card className="bg-[#1a1a1a] border-gray-800">
         <CardContent className="pt-6">
           <div className="flex flex-col items-center justify-center h-64">
             <Loader2 className="h-12 w-12 animate-spin text-red-600 mb-4" />
-            <p className="text-gray-600">Finding relevant educational videos...</p>
+            <p className="text-gray-400">Finding relevant educational videos...</p>
           </div>
         </CardContent>
       </Card>
@@ -128,11 +112,11 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="bg-[#1a1a1a] border-gray-800">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-white">
             <Youtube className="h-6 w-6 text-red-600" />
-            YouTube Video Recommendations
+            Video Recommendations
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -142,37 +126,43 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
               value={customTopic}
               onChange={(e) => setCustomTopic(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCustomSearch()}
+              className="bg-[#0a0a0a] border-gray-700 text-gray-200 placeholder:text-gray-500"
             />
-            <Button onClick={handleCustomSearch} disabled={loading}>
+            <Button 
+              onClick={handleCustomSearch} 
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
               <Search className="h-4 w-4 mr-2" />
               Search
             </Button>
           </div>
 
           {searchQuery && (
-            <p className="text-sm text-gray-600 mb-4">
-              Showing results for: <span className="font-medium">{searchQuery}</span>
+            <p className="text-sm text-gray-400 mb-4">
+              Showing results for: <span className="font-medium text-gray-300">{searchQuery}</span>
             </p>
           )}
         </CardContent>
       </Card>
 
       {selectedVideo && (
-        <Card>
+        <Card className="bg-[#1a1a1a] border-gray-800">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Now Playing</CardTitle>
+              <CardTitle className="text-lg text-white">Now Playing</CardTitle>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setSelectedVideo(null)}
+                className="border-gray-700 text-gray-300 hover:bg-gray-800"
               >
                 Close
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="aspect-video w-full">
+            <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
               <iframe
                 width="100%"
                 height="100%"
@@ -181,15 +171,14 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
-                className="rounded-lg"
               />
             </div>
             <div className="mt-4">
-              <h3 className="font-semibold text-lg mb-2">{selectedVideo.title}</h3>
-              <Badge variant="secondary" className="mb-2">
+              <h3 className="font-semibold text-lg text-white mb-2">{selectedVideo.title}</h3>
+              <Badge variant="secondary" className="mb-2 bg-gray-800 text-gray-300">
                 {selectedVideo.channelTitle}
               </Badge>
-              <p className="text-sm text-gray-600 line-clamp-3">
+              <p className="text-sm text-gray-400 line-clamp-3">
                 {selectedVideo.description}
               </p>
             </div>
@@ -201,35 +190,38 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
         {videos.map((video) => (
           <Card
             key={video.id}
-            className="cursor-pointer hover:shadow-lg transition-shadow"
+            className="cursor-pointer hover:border-gray-600 transition-all bg-[#1a1a1a] border-gray-800 hover:shadow-lg"
             onClick={() => setSelectedVideo(video)}
           >
-            <div className="relative">
+            <div className="relative group">
               <img
                 src={video.thumbnail}
                 alt={video.title}
-                className="w-full aspect-video object-cover rounded-t-lg"
+                className="w-full aspect-video object-cover"
               />
-              <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
-                <Youtube className="h-3 w-3" />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                <Play className="h-12 w-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="absolute bottom-2 right-2 bg-black/90 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+                <Youtube className="h-3 w-3 text-red-600" />
                 Watch
               </div>
             </div>
             <CardContent className="pt-4">
-              <h3 className="font-semibold text-sm line-clamp-2 mb-2">
+              <h3 className="font-semibold text-sm line-clamp-2 mb-2 text-gray-200">
                 {video.title}
               </h3>
-              <Badge variant="outline" className="text-xs mb-2">
+              <Badge variant="outline" className="text-xs mb-2 border-gray-700 text-gray-400">
                 {video.channelTitle}
               </Badge>
-              <p className="text-xs text-gray-600 line-clamp-2">
+              <p className="text-xs text-gray-500 line-clamp-2 mb-2">
                 {video.description}
               </p>
               <a
                 href={video.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 mt-2"
+                className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300"
                 onClick={(e) => e.stopPropagation()}
               >
                 Open in YouTube
@@ -247,10 +239,10 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
       )}
 
       {!loading && videos.length === 0 && (
-        <Card>
+        <Card className="bg-[#1a1a1a] border-gray-800">
           <CardContent className="pt-6">
-            <div className="text-center text-gray-500">
-              <Youtube className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <div className="text-center text-gray-500 py-12">
+              <Youtube className="h-12 w-12 mx-auto mb-4 text-gray-700" />
               <p>No videos found. Try searching for a specific topic.</p>
             </div>
           </CardContent>
