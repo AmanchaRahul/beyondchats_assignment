@@ -33,6 +33,24 @@ interface Chat {
     citations?: Array<{page: number, quote: string}>;
   }>;
 }
+type ChatMessageLocal = {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  citations?: Array<{ page: number; quote: string }>;
+};
+
+// Types for parsed PDF elements and chunk metadata
+interface ParsedElement {
+  text?: string;
+  pageNumber?: number;
+}
+
+interface ChunkWithPageMeta {
+  text: string;
+  pageNumber: number;
+  chunkIndex: number;
+}
 
 export default function Home() {
   const [selectedPdf, setSelectedPdf] = useState<{ id: string; url: string } | null>(null);
@@ -95,13 +113,13 @@ export default function Home() {
       if (!success || !data) throw new Error('PDF parsing returned no data');
       
       const pageMap = new Map<number, string>();
-      data.forEach((element: any) => {
+      (data as ParsedElement[]).forEach((element) => {
         const pageNum = element.pageNumber || 1;
         const existingText = pageMap.get(pageNum) || '';
         pageMap.set(pageNum, existingText + '\n' + (element.text || ''));
       });
       
-      const chunksWithPages: Array<{text: string, pageNumber: number, chunkIndex: number}> = [];
+      const chunksWithPages: Array<ChunkWithPageMeta> = [];
       let globalChunkIndex = 0;
       
       pageMap.forEach((pageText, pageNum) => {
@@ -121,8 +139,8 @@ export default function Home() {
         }
       });
       
-      const content = data
-        .map((item: any) => item.text || '')
+      const content = (data as ParsedElement[])
+        .map((item) => item.text || '')
         .filter((text: string) => text.trim().length > 0)
         .join('\n');
       
@@ -142,7 +160,7 @@ export default function Home() {
     }
   };
 
-  const handleChatUpdate = (chatId: string, title: string, messages: any[]) => {
+  const handleChatUpdate = (chatId: string, title: string, messages: ChatMessageLocal[]) => {
     setChats(prev => prev.map(chat => 
       chat.id === chatId ? { ...chat, title, messages } : chat
     ));

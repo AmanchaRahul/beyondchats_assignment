@@ -82,7 +82,7 @@ export function ChatInterface({
   if (!input.trim()) return;
   
   // If no chatId, create one automatically without logging
-  let activeChatId = chatId || Date.now().toString();
+  const activeChatId = chatId || Date.now().toString();
 
   const userMessage: ChatMessage = {
     id: generateUniqueId(),
@@ -143,7 +143,7 @@ export function ChatInterface({
                 How can I help you today?
               </h2>
               <p className="text-gray-400 text-center max-w-md">
-                Ask me anything about your coursebook. I'll provide answers with citations from the source material.
+                Ask me anything about your coursebook. I&apos;ll provide answers with citations from the source material.
               </p>
             </div>
           ) : (
@@ -220,7 +220,7 @@ export function ChatInterface({
                           <Badge variant="secondary" className="text-xs mb-1 bg-gray-800 text-gray-300">
                             Page {citation.page}
                           </Badge>
-                          <p className="text-gray-400 italic break-words">"{citation.quote}"</p>
+                          <p className="text-gray-400 italic break-words">&quot;{citation.quote}&quot;</p>
                         </div>
                       ))}
                     </div>
