@@ -141,17 +141,17 @@ export function ChatInterface({
     <div className="flex flex-col h-full bg-[#0a0a0a]">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full px-4">
-            <h2 className="text-3xl font-semibold text-white mb-3">
-              How can I help you today?
-            </h2>
-            <p className="text-gray-400 text-center max-w-md">
-              Ask me anything about your coursebook. I'll provide answers with citations from the source material.
-            </p>
-          </div>
-        ) : (
-          <div className="max-w-4xl mx-auto px-4 py-8">
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full px-4">
+              <h2 className="text-3xl font-semibold text-white mb-3">
+                How can I help you today?
+              </h2>
+              <p className="text-gray-400 text-center max-w-md">
+                Ask me anything about your coursebook. I'll provide answers with citations from the source material.
+              </p>
+            </div>
+          ) : (
+          <div className="max-w-3xl mx-auto px-4 py-8 w-full">
             {messages.map((msg) => (
               <div key={msg.id} className={cn(
                 "mb-8 flex",
@@ -248,7 +248,7 @@ export function ChatInterface({
 
       {/* Input Area - ChatGPT Style */}
       <div className="border-t border-gray-800 bg-[#0a0a0a] p-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-3xl mx-auto w-full">
           <div className="relative flex items-end gap-2 bg-[#2f2f2f] rounded-3xl px-4 py-3">
             {/* Plus Button for Upload */}
             <Sheet>

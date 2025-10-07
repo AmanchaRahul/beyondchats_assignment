@@ -307,7 +307,20 @@ export default function Home() {
 
           {/* Right - PDF Viewer (Desktop Only) */}
           {selectedPdf && !processing && (
-            <aside className="hidden xl:block w-[500px] border-l border-gray-800 bg-[#0a0a0a]">
+            <aside className="hidden xl:block w-[500px] border-l border-gray-800 bg-[#0a0a0a] relative">
+              {/* Close Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setSelectedPdf(null);
+                  setPdfContent('');
+                }}
+                className="absolute top-2 right-2 z-50 bg-[#171717] hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              
               <div className="h-full flex flex-col">
                 <div className="flex-1 overflow-hidden">
                   <PDFViewerClient url={selectedPdf.url} />
@@ -315,13 +328,23 @@ export default function Home() {
               </div>
             </aside>
           )}
+
         </div>
       </div>
 
       {/* Quiz Modal */}
+      
       <Sheet open={showQuizModal} onOpenChange={setShowQuizModal}>
         <SheetContent side="right" className="w-full sm:max-w-2xl bg-[#171717] border-gray-800 overflow-y-auto">
-          <SheetHeader>
+          <SheetHeader className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowQuizModal(false)}
+              className="absolute top-2 -right-2 bg-[#2f2f2f] hover:bg-gray-700 text-gray-300 hover:text-white h-6 w-6"
+            >
+              <X className="h-3 w-3" />
+            </Button>
             <SheetTitle className="text-white">Quiz Generator</SheetTitle>
             <SheetDescription className="text-gray-400">
               Test your knowledge with AI-generated questions
@@ -335,10 +358,23 @@ export default function Home() {
         </SheetContent>
       </Sheet>
 
+
       {/* Progress Modal */}
+      
       <Sheet open={showProgressModal} onOpenChange={setShowProgressModal}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl bg-[#171717] border-gray-800 overflow-y-auto">
-          <SheetHeader>
+        <SheetContent 
+          side="right" 
+          className="w-full sm:max-w-3xl bg-[#171717] border-gray-800 overflow-y-auto" // CHANGED: sm:max-w-3xl
+        >
+          <SheetHeader className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowProgressModal(false)}
+              className="absolute top-2 -right-2 bg-[#2f2f2f] hover:bg-gray-700 text-gray-300 hover:text-white h-6 w-6"
+            >
+              <X className="h-3 w-3" />
+            </Button>
             <SheetTitle className="text-white">Your Progress</SheetTitle>
             <SheetDescription className="text-gray-400">
               Track your learning journey and quiz performance
