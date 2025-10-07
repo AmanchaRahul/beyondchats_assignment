@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,14 +48,7 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
 
-  useEffect(() => {
-    if (!hasLoaded && pdfContent && pdfContent.length > 100) {
-      loadRecommendations();
-      setHasLoaded(true);
-    }
-  }, [pdfContent, hasLoaded]);
-
-  const loadRecommendations = async (topic?: string) => {
+  const loadRecommendations = useCallback(async (topic?: string) => {
     setLoading(true);
     try {
       let searchTopic = topic;
@@ -83,13 +76,20 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
       } else {
         setVideos([]);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading YouTube recommendations:', error);
       setVideos([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [pdfContent, pdfId]);
+
+  useEffect(() => {
+    if (!hasLoaded && pdfContent && pdfContent.length > 100) {
+      loadRecommendations();
+      setHasLoaded(true);
+    }
+  }, [pdfContent, hasLoaded, loadRecommendations]);
 
   const handleCustomSearch = () => {
     if (customTopic.trim().length > 0) {
@@ -198,6 +198,8 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
                 src={video.thumbnail}
                 alt={video.title}
                 className="w-full aspect-video object-cover"
+                loading="lazy"
+                decoding="async"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
                 <Play className="h-12 w-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />

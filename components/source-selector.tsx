@@ -67,7 +67,7 @@ export function SourceSelector({ onSelect }: SourceSelectorProps) {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 200);
 
-      const { data, error } = await supabase.storage
+      const { data: uploadData, error } = await supabase.storage
         .from('pdfs')
         .upload(fileName, file);
 
@@ -88,9 +88,10 @@ export function SourceSelector({ onSelect }: SourceSelectorProps) {
         setUploading(false);
       }, 500);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Upload error:', error);
-      alert('Failed to upload PDF: ' + error.message);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      alert('Failed to upload PDF: ' + message);
       setUploading(false);
     }
   };

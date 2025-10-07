@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -21,11 +21,7 @@ export function ProgressDashboard({ pdfId }: ProgressDashboardProps) {
   const [attempts, setAttempts] = useState<AttemptData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchProgress();
-  }, [pdfId]);
-
-  const fetchProgress = async () => {
+  const fetchProgress = useCallback(async () => {
     setLoading(true);
     try {
       const url = pdfId
@@ -43,7 +39,11 @@ export function ProgressDashboard({ pdfId }: ProgressDashboardProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pdfId]);
+
+  useEffect(() => {
+    fetchProgress();
+  }, [fetchProgress]);
 
   const averageScore = attempts.length > 0
     ? attempts.reduce((sum, a) => sum + a.score, 0) / attempts.length

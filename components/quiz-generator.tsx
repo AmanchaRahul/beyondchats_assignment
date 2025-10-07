@@ -60,8 +60,9 @@ export function QuizGenerator({ pdfId, content }: QuizGeneratorProps) {
       setUserAnswers({});
       setShowResults(false);
       
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to generate quiz';
+      setError(message);
     } finally {
       setLoading(false);
     }
