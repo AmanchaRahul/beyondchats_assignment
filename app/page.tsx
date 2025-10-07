@@ -7,10 +7,9 @@ import { PDFViewer } from '@/components/pdf-viewer';
 import { QuizGenerator } from '@/components/quiz-generator';
 import { ChatInterface } from '@/components/chat-interface';
 import { ProgressDashboard } from '@/components/progress-dashboard';
+import { YoutubeRecommendations } from '@/components/youtube-recommendations';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { YoutubeRecommendations } from '@/components/youtube-recommendations';
-
 
 export default function Home() {
   const [selectedPdf, setSelectedPdf] = useState<{
@@ -29,7 +28,6 @@ export default function Home() {
     try {
       console.log('Fetching PDF from:', url);
       
-      // Fetch the PDF file
       const response = await fetch(url, { mode: 'cors' });
       if (!response.ok) {
         throw new Error(`Failed to fetch PDF: ${response.statusText}`);
@@ -38,49 +36,39 @@ export default function Home() {
       const blob = await response.blob();
       console.log('PDF blob size:', blob.size);
       
-      // Parse PDF with Unstructured.io
       const formData = new FormData();
       formData.append('file', blob, pdfId);
       
-      console.log('Parsing PDF with Unstructured.io...');
+      console.log('Parsing PDF...');
       const parseResponse = await fetch('/api/parse-pdf', {
         method: 'POST',
         body: formData,
       });
       
-      if (!parseResponse.ok) {
-        throw new Error('Failed to parse PDF');
-      }
+      if (!parseResponse.ok) throw new Error('Failed to parse PDF');
       
       const { data, success } = await parseResponse.json();
-      
-      if (!success || !data) {
-        throw new Error('PDF parsing returned no data');
-      }
+      if (!success || !data) throw new Error('PDF parsing returned no data');
       
       console.log('PDF parsed successfully, items:', data.length);
       
-      // Group elements by page and create chunks
       const pageMap = new Map<number, string>();
-      
       data.forEach((element: any) => {
         const pageNum = element.pageNumber || 1;
         const existingText = pageMap.get(pageNum) || '';
         pageMap.set(pageNum, existingText + '\n' + (element.text || ''));
       });
       
-      // Create chunks with page numbers (500 chars per chunk)
       const chunksWithPages: Array<{text: string, pageNumber: number, chunkIndex: number}> = [];
       let globalChunkIndex = 0;
       
       pageMap.forEach((pageText, pageNum) => {
         const cleanText = pageText.trim();
         if (cleanText.length > 0) {
-          // Split page into ~500 character chunks
           const chunkSize = 500;
           for (let i = 0; i < cleanText.length; i += chunkSize) {
             const chunkText = cleanText.substring(i, i + chunkSize);
-            if (chunkText.trim().length > 50) { // Only store meaningful chunks
+            if (chunkText.trim().length > 50) {
               chunksWithPages.push({
                 text: chunkText,
                 pageNumber: pageNum,
@@ -91,7 +79,6 @@ export default function Home() {
         }
       });
       
-      // Extract full content for quiz generation
       const content = data
         .map((item: any) => item.text || '')
         .filter((text: string) => text.trim().length > 0)
@@ -101,27 +88,19 @@ export default function Home() {
       console.log('Created chunks with pages:', chunksWithPages.length);
       setPdfContent(content);
       
-      // Create embeddings in ChromaDB
       if (chunksWithPages.length > 0) {
-        console.log('Creating embeddings for', chunksWithPages.length, 'chunks');
-        
-        const embedResponse = await fetch('/api/embed', {
+        console.log('Creating embeddings...');
+        await fetch('/api/embed', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            pdfId,
-            chunks: chunksWithPages,
-          }),
+          body: JSON.stringify({ pdfId, chunks: chunksWithPages }),
         });
-        
-        const embedResult = await embedResponse.json();
-        console.log('Embeddings created:', embedResult.success);
       }
       
       console.log('PDF processing complete!');
     } catch (error: any) {
       console.error('Error processing PDF:', error);
-      setError(error.message || 'Failed to process PDF. Please try again.');
+      setError(error.message || 'Failed to process PDF');
     } finally {
       setProcessing(false);
     }
@@ -194,7 +173,6 @@ export default function Home() {
               <ChatInterface pdfId={selectedPdf.id} />
             </TabsContent>
 
-
             <TabsContent value="videos">
               <YoutubeRecommendations 
                 pdfContent={pdfContent}
@@ -207,7 +185,6 @@ export default function Home() {
             </TabsContent>
           </Tabs>
         )}
-
 
         {!processing && !selectedPdf && (
           <div className="text-center py-20">

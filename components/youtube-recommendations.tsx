@@ -7,16 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Youtube, ExternalLink, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-
 // Helper to extract meaningful topic from filename
 function extractTopicFromFilename(filename: string): string {
   const cleanName = filename
-    .replace(/^\d+_/, '') // Remove timestamp prefix
-    .replace(/\.pdf$/i, '') // Remove .pdf extension
-    .replace(/[_-]/g, ' ') // Replace underscores/dashes with spaces
+    .replace(/^\d+_/, '')
+    .replace(/\.pdf$/i, '')
+    .replace(/[_-]/g, ' ')
     .toLowerCase();
 
-  // Common patterns
   if (cleanName.includes('ncert') || cleanName.includes('keph')) {
     return 'NCERT Physics Class 11';
   }
@@ -32,7 +30,6 @@ function extractTopicFromFilename(filename: string): string {
 
   return cleanName;
 }
-
 
 interface Video {
   id: string;
@@ -56,48 +53,59 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
   const [customTopic, setCustomTopic] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
-    // Auto-load recommendations when component mounts
-    loadRecommendations();
-    }, []);
+    // Only auto-load once when component mounts with content
+    if (!hasLoaded && pdfContent && pdfContent.length > 100) {
+      loadRecommendations();
+      setHasLoaded(true);
+    }
+  }, [pdfContent, hasLoaded]); // Safe dependency array
 
-    const loadRecommendations = async (topic?: string) => {
-        setLoading(true);
-        try {
-            // Try to extract topic from PDF filename if no custom topic
-            let searchTopic = topic;
+  const loadRecommendations = async (topic?: string) => {
+    setLoading(true);
+    try {
+      let searchTopic = topic;
 
-            if (!searchTopic && pdfId) {
-            searchTopic = extractTopicFromFilename(pdfId);
-            console.log('Extracted topic from filename:', searchTopic);
-            }
+      if (!searchTopic && pdfId) {
+        searchTopic = extractTopicFromFilename(pdfId);
+        console.log('Extracted topic from filename:', searchTopic);
+      }
 
-            const response = await fetch('/api/youtube-search', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                topic: searchTopic || undefined,
-                pdfContent: !searchTopic ? pdfContent.substring(0, 1000) : undefined,
-            }),
-            });
+      console.log('Fetching YouTube videos for:', searchTopic);
 
-            const data = await response.json();
+      const response = await fetch('/api/youtube-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: searchTopic || undefined,
+          pdfContent: !searchTopic ? pdfContent.substring(0, 1000) : undefined,
+        }),
+      });
 
-            if (data.success && data.videos) {
-            setVideos(data.videos);
-            setSearchQuery(data.searchQuery);
-            } else {
-            console.error('Failed to load videos:', data.error);
-            }
-        } catch (error) {
-            console.error('Error loading YouTube recommendations:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
+      const data = await response.json();
 
+      if (data.success && data.videos) {
+        setVideos(data.videos);
+        setSearchQuery(data.searchQuery);
+        console.log('Loaded', data.videos.length, 'videos');
+      } else {
+        console.error('Failed to load videos:', data.error);
+        setVideos([]); // Set empty array on error
+      }
+    } catch (error: any) {
+      console.error('Error loading YouTube recommendations:', error);
+      setVideos([]); // Set empty array on error
+      // Don't throw - handle gracefully
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCustomSearch = () => {
     if (customTopic.trim().length > 0) {
@@ -133,7 +141,7 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
               placeholder="Search for specific topic..."
               value={customTopic}
               onChange={(e) => setCustomTopic(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleCustomSearch()}
+              onKeyDown={(e) => e.key === 'Enter' && handleCustomSearch()}
             />
             <Button onClick={handleCustomSearch} disabled={loading}>
               <Search className="h-4 w-4 mr-2" />
@@ -174,7 +182,7 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
                 className="rounded-lg"
-              ></iframe>
+              />
             </div>
             <div className="mt-4">
               <h3 className="font-semibold text-lg mb-2">{selectedVideo.title}</h3>
