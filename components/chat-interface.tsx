@@ -163,12 +163,12 @@ export function ChatInterface({
                 )}>
                   {/* Message Bubble */}
                   <div className={cn(
-                    "rounded-2xl px-5 py-3",
+                    "rounded-2xl px-5 py-3 break-words whitespace-pre-wrap",
                     msg.role === 'user'
                       ? 'bg-emerald-600 text-white'
                       : 'bg-[#2f2f2f] text-gray-100'
                   )}>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
                       {msg.content}
                     </p>
                   </div>
@@ -214,17 +214,17 @@ export function ChatInterface({
 
                   {/* Citations */}
                   {msg.citations && msg.citations.length > 0 && (
-                    <div className="space-y-1 mt-2">
+                    <div className="space-y-1 mt-2 min-w-0">
                       <p className="text-xs text-gray-500 font-medium">Sources:</p>
                       {msg.citations.map((citation, idx) => (
                         <div
                           key={`citation-${msg.id}-${idx}`}
-                          className="text-xs bg-[#1a1a1a] border border-gray-800 rounded-lg p-2"
+                          className="text-xs bg-[#1a1a1a] border border-gray-800 rounded-lg p-2 break-words"
                         >
                           <Badge variant="secondary" className="text-xs mb-1 bg-gray-800 text-gray-300">
                             Page {citation.page}
                           </Badge>
-                          <p className="text-gray-400 italic">"{citation.quote}"</p>
+                          <p className="text-gray-400 italic break-words">"{citation.quote}"</p>
                         </div>
                       ))}
                     </div>

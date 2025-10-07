@@ -102,7 +102,7 @@ export function PDFViewerClient({ url }: PDFViewerClientProps) {
       </div>
 
       {/* PDF Display Area */}
-      <div className="flex-1 overflow-auto bg-[#1a1a1a] flex items-center justify-center p-4">
+      <div className="flex-1 overflow-auto bg-[#1a1a1a] flex justify-start items-center p-2 sm:p-3 md:p-4">
         {error ? (
           <div className="text-center max-w-md">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />

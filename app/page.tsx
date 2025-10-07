@@ -126,6 +126,7 @@ export default function Home() {
         .filter((text: string) => text.trim().length > 0)
         .join('\n');
       
+      console.log('✅ PDF Content Length:', content.length);
       setPdfContent(content);
       
       if (chunksWithPages.length > 0) {
@@ -146,6 +147,25 @@ export default function Home() {
     setChats(prev => prev.map(chat => 
       chat.id === chatId ? { ...chat, title, messages } : chat
     ));
+  };
+
+  // HANDLERS WITH DEBUG LOGS
+  const handleOpenQuiz = () => {
+    console.log('🎯 Opening Quiz Modal');
+    console.log('PDF Content Length:', pdfContent?.length);
+    console.log('Selected PDF:', selectedPdf);
+    setShowQuizModal(true);
+  };
+
+  const handleOpenVideos = () => {
+    console.log('🎥 Opening Videos Panel');
+    console.log('PDF Content Length:', pdfContent?.length);
+    setShowVideosPanel(true);
+  };
+
+  const handleOpenProgress = () => {
+    console.log('📊 Opening Progress Modal');
+    setShowProgressModal(true);
   };
 
   const currentChat = chats.find(c => c.id === currentChatId);
@@ -218,7 +238,7 @@ export default function Home() {
               <Button
                 variant="ghost"
                 className="w-full justify-start text-gray-400 hover:text-white hover:bg-gray-800"
-                onClick={() => setShowProgressModal(true)}
+                onClick={handleOpenProgress}
               >
                 <BarChart3 className="h-4 w-4 mr-3" />
                 Progress
@@ -249,7 +269,7 @@ export default function Home() {
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Top Bar */}
         <header className="h-14 border-b border-gray-800 bg-[#0a0a0a] flex items-center justify-between px-4">
           <div className="flex items-center gap-3">
@@ -281,9 +301,9 @@ export default function Home() {
         )}
 
         {/* Main Content Grid */}
-        <div className="flex-1 overflow-hidden flex">
+        <div className="flex-1 overflow-hidden flex min-w-0">
           {/* Center - Chat Area */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-w-0">
             {processing ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
@@ -296,9 +316,9 @@ export default function Home() {
                 chatId={currentChatId || ''}
                 chat={currentChat}
                 pdfId={selectedPdf?.id || ''}
-                onGenerateQuiz={() => setShowQuizModal(true)}
-                onShowProgress={() => setShowProgressModal(true)}
-                onShowVideos={() => setShowVideosPanel(true)}
+                onGenerateQuiz={handleOpenQuiz}
+                onShowProgress={handleOpenProgress}
+                onShowVideos={handleOpenVideos}
                 onPdfSelect={handlePdfSelect}
                 onChatUpdate={handleChatUpdate}
               />
@@ -307,19 +327,7 @@ export default function Home() {
 
           {/* Right - PDF Viewer (Desktop Only) */}
           {selectedPdf && !processing && (
-            <aside className="hidden xl:block w-[500px] border-l border-gray-800 bg-[#0a0a0a] relative">
-              {/* Close Button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setSelectedPdf(null);
-                  setPdfContent('');
-                }}
-                className="absolute top-2 right-2 z-50 bg-[#171717] hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+            <aside className="hidden xl:block w-[500px] border-l border-gray-800 bg-[#0a0a0a] relative min-w-0">
               
               <div className="h-full flex flex-col">
                 <div className="flex-1 overflow-hidden">
@@ -328,12 +336,10 @@ export default function Home() {
               </div>
             </aside>
           )}
-
         </div>
       </div>
 
       {/* Quiz Modal */}
-      
       <Sheet open={showQuizModal} onOpenChange={setShowQuizModal}>
         <SheetContent side="right" className="w-full sm:max-w-2xl bg-[#171717] border-gray-800 overflow-y-auto">
           <SheetHeader className="relative">
@@ -341,9 +347,9 @@ export default function Home() {
               variant="ghost"
               size="icon"
               onClick={() => setShowQuizModal(false)}
-              className="absolute top-2 -right-2 bg-[#2f2f2f] hover:bg-gray-700 text-gray-300 hover:text-white h-6 w-6"
+              className="absolute -top-2 -right-2 bg-[#2f2f2f] hover:bg-gray-700 text-gray-300 hover:text-white h-8 w-8"
             >
-              <X className="h-3 w-3" />
+              <X className="h-4 w-4" />
             </Button>
             <SheetTitle className="text-white">Quiz Generator</SheetTitle>
             <SheetDescription className="text-gray-400">
@@ -351,29 +357,62 @@ export default function Home() {
             </SheetDescription>
           </SheetHeader>
           <div className="mt-6">
-            {selectedPdf && pdfContent && (
+            {selectedPdf && pdfContent ? (
               <QuizGenerator pdfId={selectedPdf.id} content={pdfContent} />
+            ) : (
+              <div className="text-center py-12">
+                <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                <p className="text-gray-400">Please upload a PDF first</p>
+              </div>
             )}
           </div>
         </SheetContent>
       </Sheet>
 
+      {/* Videos Panel as Sheet */}
+      <Sheet open={showVideosPanel} onOpenChange={setShowVideosPanel}>
+        <SheetContent side="right" className="w-full sm:max-w-4xl bg-[#171717] border-gray-800 overflow-y-auto">
+          <SheetHeader className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowVideosPanel(false)}
+              className="absolute -top-2 -right-2 bg-[#2f2f2f] hover:bg-gray-700 text-gray-300 hover:text-white h-8 w-8"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <SheetTitle className="text-white">Video Recommendations</SheetTitle>
+            <SheetDescription className="text-gray-400">
+              Educational videos related to your coursebook
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6">
+            {selectedPdf && pdfContent ? (
+              <YoutubeRecommendations pdfContent={pdfContent} pdfId={selectedPdf.id} />
+            ) : (
+              <div className="text-center py-12">
+                <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                <p className="text-gray-400">Please upload a PDF first</p>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Progress Modal */}
-      
       <Sheet open={showProgressModal} onOpenChange={setShowProgressModal}>
         <SheetContent 
           side="right" 
-          className="w-full sm:max-w-3xl bg-[#171717] border-gray-800 overflow-y-auto" // CHANGED: sm:max-w-3xl
+          className="w-full sm:max-w-3xl bg-[#171717] border-gray-800 overflow-y-auto"
         >
           <SheetHeader className="relative">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowProgressModal(false)}
-              className="absolute top-2 -right-2 bg-[#2f2f2f] hover:bg-gray-700 text-gray-300 hover:text-white h-6 w-6"
+              className="absolute -top-2 -right-2 bg-[#2f2f2f] hover:bg-gray-700 text-gray-300 hover:text-white h-8 w-8"
             >
-              <X className="h-3 w-3" />
+              <X className="h-4 w-4" />
             </Button>
             <SheetTitle className="text-white">Your Progress</SheetTitle>
             <SheetDescription className="text-gray-400">
