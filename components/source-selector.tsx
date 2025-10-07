@@ -67,7 +67,7 @@ export function SourceSelector({ onSelect }: SourceSelectorProps) {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 200);
 
-      const { data: uploadData, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('pdfs')
         .upload(fileName, file);
 

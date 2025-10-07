@@ -34,7 +34,7 @@ export function ProgressDashboard({ pdfId }: ProgressDashboardProps) {
       if (data.success) {
         setAttempts(data.attempts || []);
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to fetch progress');
     } finally {
       setLoading(false);

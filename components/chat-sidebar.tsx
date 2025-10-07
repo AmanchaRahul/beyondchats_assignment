@@ -1,9 +1,7 @@
 'use client';
-
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { PlusCircle, MessageSquare, Trash2, Menu, X } from 'lucide-react';
+import { PlusCircle, MessageSquare, Trash2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Chat {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -194,12 +195,14 @@ export function YoutubeRecommendations({ pdfContent, pdfId }: YoutubeRecommendat
             onClick={() => setSelectedVideo(video)}
           >
             <div className="relative group">
-              <img
+              <Image
                 src={video.thumbnail}
                 alt={video.title}
+                width={480}
+                height={270}
                 className="w-full aspect-video object-cover"
-                loading="lazy"
-                decoding="async"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                priority={false}
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
                 <Play className="h-12 w-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
