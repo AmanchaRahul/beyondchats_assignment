@@ -32,6 +32,7 @@ interface Chat {
     citations?: Array<{page: number, quote: string}>;
   }>;
 }
+
 type ChatMessageLocal = {
   id: string;
   role: 'user' | 'assistant';
@@ -39,7 +40,6 @@ type ChatMessageLocal = {
   citations?: Array<{ page: number; quote: string }>;
 };
 
-// Types for parsed PDF elements and chunk metadata
 interface ParsedElement {
   text?: string;
   pageNumber?: number;
@@ -62,11 +62,9 @@ export default function Home() {
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [showVideosPanel, setShowVideosPanel] = useState(false);
   
-  // Chat management
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
 
-  // AUTO-CREATE INITIAL CHAT ON MOUNT
   useEffect(() => {
     if (chats.length === 0) {
       const initialChat: Chat = {
@@ -166,7 +164,6 @@ export default function Home() {
     ));
   };
 
-  // HANDLERS WITH DEBUG LOGS
   const handleOpenQuiz = () => {
     setShowQuizModal(true);
   };
@@ -186,13 +183,14 @@ export default function Home() {
       {/* Left Sidebar - Collapsible */}
       <aside
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 bg-[#171717] border-r border-gray-800 transform transition-all duration-200 flex",
+          "bg-[#171717] border-r border-gray-800 transition-all duration-200 flex flex-shrink-0",
+          "fixed lg:relative inset-y-0 left-0 z-50",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
           isSidebarCollapsed ? "w-16" : "w-64"
         )}
       >
-        <div className="flex flex-col h-full flex-1">
-          <div className="p-4 border-b border-gray-800">
+        <div className="flex flex-col h-full flex-1 overflow-hidden">
+          <div className="p-4 border-b border-gray-800 flex-shrink-0">
             <div className="flex items-center justify-between mb-4">
               {!isSidebarCollapsed && (
                 <>
@@ -200,7 +198,7 @@ export default function Home() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="lg:hidden text-gray-400 hover:text-white"
+                    className="lg:hidden text-gray-400 hover:text-white hover:bg-gray-800"
                     onClick={() => setIsSidebarOpen(false)}
                   >
                     <X className="h-5 w-5" />
@@ -244,7 +242,7 @@ export default function Home() {
             </div>
           )}
 
-          <div className="p-4 border-t border-gray-800 space-y-2">
+          <div className="p-4 border-t border-gray-800 space-y-2 flex-shrink-0">
             {!isSidebarCollapsed && (
               <Button
                 variant="ghost"
@@ -258,21 +256,22 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Collapse Button */}
-        <div className="border-l border-gray-800 flex items-center justify-center">
+        {/* Collapse Button - Updated hover color to match design */}
+        <div className="flex items-center justify-center flex-shrink-0 bg-[#171717]">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="h-full rounded-none text-gray-500 hover:text-white hover:bg-gray-800"
+            className="h-full rounded-none text-gray-400 hover:text-gray-400 hover:bg-gray-800 w-10"
           >
             {isSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
         </div>
+
       </aside>
 
       {/* Mobile Overlay */}
-      {isSidebarOpen && !isSidebarCollapsed && (
+      {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
@@ -282,7 +281,7 @@ export default function Home() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Top Bar */}
-        <header className="h-14 border-b border-gray-800 bg-[#0a0a0a] flex items-center justify-between px-4">
+        <header className="h-14 border-b border-gray-800 bg-[#0a0a0a] flex items-center justify-between px-4 flex-shrink-0">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -305,7 +304,7 @@ export default function Home() {
         </header>
 
         {error && (
-          <Alert variant="destructive" className="m-4 bg-red-900/20 border-red-900">
+          <Alert variant="destructive" className="m-4 bg-red-900/20 border-red-900 flex-shrink-0">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
@@ -314,7 +313,7 @@ export default function Home() {
         {/* Main Content Grid */}
         <div className="flex-1 overflow-hidden flex min-w-0">
           {/* Center - Chat Area */}
-          <div className="flex-1 flex flex-col min-w-0" style={{ minWidth: isSidebarCollapsed ? '300px' : '350px' }}>
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             {processing ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
@@ -338,14 +337,9 @@ export default function Home() {
 
           {/* Right - PDF Viewer (Desktop Only) */}
           {selectedPdf && !processing && (
-            <aside className={`hidden lg:block border-l border-gray-800 bg-[#0a0a0a] relative min-w-0 flex-shrink-0 ${
-              isSidebarCollapsed ? 'w-[350px]' : 'w-[400px] xl:w-[500px]'
-            }`}>
-              
-              <div className="h-full flex flex-col">
-                <div className="flex-1 overflow-hidden">
-                  <PDFViewerClient url={selectedPdf.url} />
-                </div>
+            <aside className="hidden lg:flex border-l border-gray-800 bg-[#0a0a0a] w-[45%] max-w-[600px] min-w-[400px] flex-shrink-0">
+              <div className="h-full w-full flex flex-col overflow-hidden">
+                <PDFViewerClient url={selectedPdf.url} />
               </div>
             </aside>
           )}
