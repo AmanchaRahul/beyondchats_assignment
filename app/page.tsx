@@ -314,7 +314,7 @@ export default function Home() {
         {/* Main Content Grid */}
         <div className="flex-1 overflow-hidden flex min-w-0">
           {/* Center - Chat Area */}
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0" style={{ minWidth: isSidebarCollapsed ? '300px' : '350px' }}>
             {processing ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
@@ -338,7 +338,9 @@ export default function Home() {
 
           {/* Right - PDF Viewer (Desktop Only) */}
           {selectedPdf && !processing && (
-            <aside className="hidden xl:block w-[500px] border-l border-gray-800 bg-[#0a0a0a] relative min-w-0">
+            <aside className={`hidden lg:block border-l border-gray-800 bg-[#0a0a0a] relative min-w-0 flex-shrink-0 ${
+              isSidebarCollapsed ? 'w-[350px]' : 'w-[400px] xl:w-[500px]'
+            }`}>
               
               <div className="h-full flex flex-col">
                 <div className="flex-1 overflow-hidden">
@@ -358,7 +360,7 @@ export default function Home() {
               variant="ghost"
               size="icon"
               onClick={() => setShowQuizModal(false)}
-              className="absolute -top-2 -right-2 bg-[#2f2f2f] hover:bg-gray-700 text-gray-300 hover:text-white h-8 w-8"
+              className="absolute top-2 right-2 bg-[#2f2f2f] hover:bg-gray-700 text-gray-300 hover:text-white h-8 w-8"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -388,7 +390,7 @@ export default function Home() {
               variant="ghost"
               size="icon"
               onClick={() => setShowVideosPanel(false)}
-              className="absolute -top-2 -right-2 bg-[#2f2f2f] hover:bg-gray-700 text-gray-300 hover:text-white h-8 w-8"
+              className="absolute top-2 right-2 bg-[#2f2f2f] hover:bg-gray-700 text-gray-300 hover:text-white h-8 w-8"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -421,7 +423,7 @@ export default function Home() {
               variant="ghost"
               size="icon"
               onClick={() => setShowProgressModal(false)}
-              className="absolute -top-2 -right-2 bg-[#2f2f2f] hover:bg-gray-700 text-gray-300 hover:text-white h-8 w-8"
+              className="absolute top-2 right-2 bg-[#2f2f2f] hover:bg-gray-700 text-gray-300 hover:text-white h-8 w-8"
             >
               <X className="h-4 w-4" />
             </Button>

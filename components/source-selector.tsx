@@ -115,13 +115,13 @@ export function SourceSelector({ onSelect }: SourceSelectorProps) {
 
   return (
     <Card className="bg-[#1a1a1a] border-gray-800">
-      <CardHeader>
+      <CardHeader className="px-4 sm:px-6">
         <CardTitle className="text-white">Select PDF Source</CardTitle>
         <CardDescription className="text-gray-400">
           Choose from your uploaded PDFs or upload a new coursebook
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 px-4 sm:px-6">
         {/* Stored PDFs */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -149,9 +149,9 @@ export function SourceSelector({ onSelect }: SourceSelectorProps) {
               <span className="text-sm text-gray-500">No PDFs found. Upload one below.</span>
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex gap-2 min-w-0">
               <Select value={selectedSource} onValueChange={setSelectedSource}>
-                <SelectTrigger className="flex-1 bg-[#0a0a0a] border-gray-700 text-gray-300">
+                <SelectTrigger className="flex-1 bg-[#0a0a0a] border-gray-700 text-gray-300 min-w-0">
                   <SelectValue placeholder="Select a PDF" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1a1a1a] border-gray-700 max-h-80">
@@ -163,7 +163,7 @@ export function SourceSelector({ onSelect }: SourceSelectorProps) {
                     >
                       <div className="flex items-center gap-2">
                         <FileText className="h-3 w-3 text-gray-500" />
-                        <span className="truncate max-w-xs">
+                        <span className="truncate max-w-[200px] sm:max-w-xs">
                           {getDisplayName(pdf.name)}
                         </span>
                       </div>

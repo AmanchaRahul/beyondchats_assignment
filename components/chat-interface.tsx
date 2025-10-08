@@ -18,7 +18,8 @@ import {
   Youtube, 
   BarChart3, 
   Loader2, 
-  Plus 
+  Plus,
+  X
 } from 'lucide-react';
 import { SourceSelector } from '@/components/source-selector';
 import { cn } from '@/lib/utils';
@@ -65,6 +66,7 @@ export function ChatInterface({
   const [messages, setMessages] = useState<ChatMessage[]>(chat?.messages || []);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -246,18 +248,27 @@ export function ChatInterface({
         <div className="max-w-3xl mx-auto w-full">
           <div className="relative flex items-end gap-2 bg-[#2f2f2f] rounded-3xl px-4 py-3">
             {/* Plus Button for Upload */}
-            <Sheet>
+            <Sheet open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="flex-shrink-0 h-8 w-8 rounded-full hover:bg-gray-700 text-gray-400"
+                  onClick={() => setIsUploadModalOpen(true)}
                 >
                   <Plus className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-96 bg-[#171717] border-gray-800">
-                <SheetHeader>
+              <SheetContent side="right" className="w-full sm:w-96 bg-[#171717] border-gray-800">
+                <SheetHeader className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 bg-[#2f2f2f] hover:bg-gray-700 text-gray-300 hover:text-white h-8 w-8"
+                    onClick={() => setIsUploadModalOpen(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                   <SheetTitle className="text-white">Upload Document</SheetTitle>
                   <SheetDescription className="text-gray-400">
                     Select a PDF from your library or upload a new one
@@ -267,6 +278,7 @@ export function ChatInterface({
                   <SourceSelector onSelect={(id, url) => {
                     if (onPdfSelect) {
                       onPdfSelect(id, url);
+                      setIsUploadModalOpen(false); // Close modal after selection
                     }
                   }} />
                 </div>

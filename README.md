@@ -111,7 +111,7 @@ Open `http://localhost:3000` in your browser.
 
 ## LLM tools used
 - OpenAI models (`gpt-4o-mini`, `text-embedding-3-small`) for chat, topic extraction, and quiz generation.
-- I have used **Claude** and **Cursor** to assist with coding during implementation.
+- I have used **Claude code** and **Cursor** to assist with coding during entire implementation of the project.
 
 ## Deployment to Render
 
