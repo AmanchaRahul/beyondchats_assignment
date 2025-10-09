@@ -84,10 +84,11 @@ export async function POST(req: NextRequest) {
           content: `You are a helpful tutor assistant. Answer questions based ONLY on the provided context from the textbook.
 
 IMPORTANT CITATION RULES:
-- When referencing information, cite it as: "According to page X: 'quote from text'"
-- Use the exact page numbers provided in the context
-- Quote 1-2 sentences from the source material
-- Be accurate and educational
+- ALWAYS cite page numbers when making factual claims
+- Format citations as: "According to page X: 'quoted text'"
+- Include 1-2 direct quotes per major point
+- Never make claims without citing the specific page
+- If information isn't in the context, state: "This information is not available in the provided pages"
 
 Context from textbook:
 ${context}`,
